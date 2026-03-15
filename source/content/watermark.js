@@ -1,8 +1,8 @@
 (async () => {
-  if (window.location.pathname != "/") return;
-  let enabled = await browser.storage.local.get(['tetrioPlusEnabled', 'watermarkEnabled']);
-  if (!enabled.tetrioPlusEnabled || !enabled.watermarkEnabled) return;
-  let style = `
+    if (window.location.pathname != "/") return;
+    let enabled = await browser.storage.local.get(['tetrioPlusEnabled', 'watermarkEnabled']);
+    if (!enabled.tetrioPlusEnabled || !enabled.watermarkEnabled) return;
+    let style = `
     #tetrio_plus_indicator {
       display: grid;
       grid-template: "left right" auto / auto;
@@ -83,8 +83,8 @@
       image-rendering: pixelated;*/
     }
   `;
-  
-  let html = `
+
+    let html = `
     <style>${style}</style>
     <div class="tpi_body">
       <div class="tpi_body_inner">
@@ -105,76 +105,79 @@
     <img class="tpi_edge" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
   `;
 
-  document.querySelector('#tetrio_plus_indicator')?.remove();
-  let container = document.createElement('div');
-  container.id = 'tetrio_plus_indicator';
-  container.innerHTML = html;
-  document.body.appendChild(container);
-  
-  function updateCornerWidth() {
-    let w = container.querySelector('.tpi_logo_wrapper');
-    let { height } = w.getBoundingClientRect();
-    w.style.width = height + 'px';
-  }
-  updateCornerWidth();
-  
-  let show_icons = [
-    {
-      keys: ['skin', 'ghost'],
-      op: x => x.skin || x.ghost,
-      sprite: [0, 0, 16, 16],
-      canvas_resolution: [96, 96],
-      special: (canvas) => {
-        // draw the actual skin over the skin icon, which provides both a neat effect and good transparent fallback behavior
-        let skin = new Image();
-        skin.src = 'https://tetr.io/res/skins/minos/connected.2x.png';
-        new Promise(res => skin.onload = res).then(() => {
-          canvas.getContext('2d').drawImage(skin, 768, 288, 96, 96, 0, 0, canvas.width, canvas.height);
-        });
-      }
-    },
-    { keys: ['musicEnabled', 'music'], sprite: [16, 0, 16, 16] },
-    { keys: ['sfxEnabled', 'customSoundAtlas'], sprite: [32, 0, 16, 16] },
-    { keys: ['board', 'queue', 'grid'], sprite: [48, 0, 16, 16] },
-    { keys: ['advancedSkinLoading'], sprite: [0, 16, 16, 16] },
-    { keys: ['musicEnabled', 'musicGraphEnabled', 'musicGraph' ], sprite: [16, 16, 16, 16] },
-    { keys: ['bgEnabled', 'backgrounds'], sprite: [32, 16, 16, 16] },
-    {
-      keys: ['particle_beam', 'particle_beams_beam', 'particle_bigbox', 'particle_box', 'particle_chip', 'particle_chirp', 'particle_dust', 'particle_fbox', 'particle_fire', 'particle_particle', 'particle_smoke', 'particle_star', 'particle_flake', 'rank_d', 'rank_dplus', 'rank_cminus', 'rank_c', 'rank_cplus', 'rank_bminus', 'rank_b', 'rank_bplus', 'rank_aminus', 'rank_a', 'rank_aplus', 'rank_sminus', 'rank_s', 'rank_splus', 'rank_ss', 'rank_u', 'rank_x', 'rank_z'],
-      sprite: [48, 16, 16, 16]
-    },
-    { keys: ['enableTouchControls', 'touchControlConfig'], sprite: [64, 16, 16, 16] },
-    {
-      keys: ['bypassBootstrapper', 'enableAllSongTweaker', 'enableCustomCss', 'transparentBgEnabled', 'enableEmoteTab', 'enableOSD'],
-      op: x => Object.values(x).some(x=>x),
-      sprite: [64, 0, 16, 16]
-    },
-  ];
-  
-  let icons = container.querySelector('.tpi_icons');
-  
-  let feature_icons_atlas = new Image();
-  feature_icons_atlas.src = browser.extension.getURL('icons/feature-icons.png');
-  await new Promise(res => feature_icons_atlas.onload = res);
-  for (let icon of show_icons) {
-    let values = await browser.storage.local.get(icon.keys);
-    function defaultTest() {
-      for (let key of icon.keys)
-        if (!values[key]) return false;
-      return true;
+    document.querySelector('#tetrio_plus_indicator')?.remove();
+    let container = document.createElement('div');
+    container.id = 'tetrio_plus_indicator';
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    function updateCornerWidth() {
+        let w = container.querySelector('.tpi_logo_wrapper');
+        let {height} = w.getBoundingClientRect();
+        w.style.width = height + 'px';
     }
-    let result = (icon.op || defaultTest)(values)
-    if (!result) continue;
-    
-    let canvas = document.createElement('canvas');
-    canvas.classList.add('tpi_icon');
-    let [w, h] = icon.canvas_resolution || [16, 16];
-    canvas.width = w;
-    canvas.height = h;
-    canvas.getContext('2d').drawImage(feature_icons_atlas, ...icon.sprite, 0, 0, canvas.width, canvas.height);
-    icons.appendChild(canvas);
-    icon.special?.(canvas);
-  }
-  
-  updateCornerWidth();
+
+    updateCornerWidth();
+
+    let show_icons = [
+        {
+            keys: ['skin', 'ghost'],
+            op: x => x.skin || x.ghost,
+            sprite: [0, 0, 16, 16],
+            canvas_resolution: [96, 96],
+            special: (canvas) => {
+                // draw the actual skin over the skin icon, which provides both a neat effect and good transparent fallback behavior
+                let skin = new Image();
+                skin.src = 'https://tetr.io/res/skins/minos/connected.2x.png';
+                new Promise(res => skin.onload = res).then(() => {
+                    canvas.getContext('2d').drawImage(skin, 768, 288, 96, 96, 0, 0, canvas.width, canvas.height);
+                });
+            }
+        },
+        {keys: ['musicEnabled', 'music'], sprite: [16, 0, 16, 16]},
+        {keys: ['sfxEnabled', 'customSoundAtlas'], sprite: [32, 0, 16, 16]},
+        {keys: ['board', 'queue', 'grid'], sprite: [48, 0, 16, 16]},
+        {keys: ['advancedSkinLoading'], sprite: [0, 16, 16, 16]},
+        {keys: ['musicEnabled', 'musicGraphEnabled', 'musicGraph'], sprite: [16, 16, 16, 16]},
+        {keys: ['bgEnabled', 'backgrounds'], sprite: [32, 16, 16, 16]},
+        {
+            keys: ['particle_beam', 'particle_beams_beam', 'particle_bigbox', 'particle_box', 'particle_chip', 'particle_chirp', 'particle_dust', 'particle_fbox', 'particle_fire', 'particle_particle', 'particle_smoke', 'particle_star', 'particle_flake', 'rank_d', 'rank_dplus', 'rank_cminus', 'rank_c', 'rank_cplus', 'rank_bminus', 'rank_b', 'rank_bplus', 'rank_aminus', 'rank_a', 'rank_aplus', 'rank_sminus', 'rank_s', 'rank_splus', 'rank_ss', 'rank_u', 'rank_x', 'rank_z'],
+            sprite: [48, 16, 16, 16]
+        },
+        {keys: ['enableTouchControls', 'touchControlConfig'], sprite: [64, 16, 16, 16]},
+        {
+            keys: ['bypassBootstrapper', 'enableAllSongTweaker', 'enableCustomCss', 'transparentBgEnabled', 'enableEmoteTab', 'enableOSD'],
+            op: x => Object.values(x).some(x => x),
+            sprite: [64, 0, 16, 16]
+        },
+    ];
+
+    let icons = container.querySelector('.tpi_icons');
+
+    let feature_icons_atlas = new Image();
+    feature_icons_atlas.src = browser.extension.getURL('icons/feature-icons.png');
+    await new Promise(res => feature_icons_atlas.onload = res);
+    for (let icon of show_icons) {
+        let values = await browser.storage.local.get(icon.keys);
+
+        function defaultTest() {
+            for (let key of icon.keys)
+                if (!values[key]) return false;
+            return true;
+        }
+
+        let result = (icon.op || defaultTest)(values)
+        if (!result) continue;
+
+        let canvas = document.createElement('canvas');
+        canvas.classList.add('tpi_icon');
+        let [w, h] = icon.canvas_resolution || [16, 16];
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(feature_icons_atlas, ...icon.sprite, 0, 0, canvas.width, canvas.height);
+        icons.appendChild(canvas);
+        icon.special?.(canvas);
+    }
+
+    updateCornerWidth();
 })();

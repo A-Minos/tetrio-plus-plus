@@ -1,9 +1,10 @@
 import OptionToggle from './OptionToggle.js';
 import BackgroundEmbed from './BackgroundEmbed.js';
+
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
-  template: html`
+    template: html`
     <div class="component-wrapper">
       <div class="control-group">
         <button @click="openBgUploader" title="Opens the BG uploader window">
@@ -123,88 +124,88 @@ export default {
       </option-toggle>
     </div>
   `,
-  data: () => ({
-    cachedBackgrounds: null
-  }),
-  components: {
-    BackgroundEmbed,
-    OptionToggle
-  },
-  mounted() {
-    this.reloadBackgrounds();
-  },
-  computed: {
-    backgrounds() {
-      if (!this.cachedBackgrounds) return [];
-      return this.cachedBackgrounds;
+    data: () => ({
+        cachedBackgrounds: null
+    }),
+    components: {
+        BackgroundEmbed,
+        OptionToggle
     },
-    isElectron() {
-      return !!browser.electron;
+    mounted() {
+        this.reloadBackgrounds();
+    },
+    computed: {
+        backgrounds() {
+            if (!this.cachedBackgrounds) return [];
+            return this.cachedBackgrounds;
+        },
+        isElectron() {
+            return !!browser.electron;
+        }
+    },
+    methods: {
+        togglePreview(bg) {
+
+        },
+        reloadBackgrounds() {
+            return browser.storage.local.get([
+                'backgrounds',
+                'animatedBackground'
+            ]).then(res => {
+                this.cachedBackgrounds = [];
+                if (res.backgrounds) {
+                    this.cachedBackgrounds.push(...res.backgrounds.map(background => ({
+                        background: background,
+                        animated: false,
+                        preview: false
+                    })));
+                }
+                if (res.animatedBackground) {
+                    this.cachedBackgrounds.push({
+                        background: res.animatedBackground,
+                        animated: true,
+                        preview: false
+                    });
+                }
+            });
+        },
+        async openBgUploader() {
+            let {name} = await browser.runtime.getBrowserInfo();
+            if (name == 'Fennec') {
+                browser.tabs.create({
+                    url: browser.extension.getURL('source/panels/bgpicker/index.html'),
+                    active: true
+                });
+            } else {
+                browser.windows.create({
+                    type: 'detached_panel',
+                    url: browser.extension.getURL('source/panels/bgpicker/index.html'),
+                    width: 645,
+                    height: 425
+                });
+            }
+        },
+        deleteBackground(toDelete) {
+            let delId = toDelete.background.id;
+
+            browser.storage.local.get([
+                'backgrounds',
+                'animatedBackground'
+            ]).then(({backgrounds, animatedBackground}) => {
+                if ((animatedBackground || {}).id == delId) {
+                    browser.storage.local.remove('animatedBackground');
+                    browser.storage.local.remove('background-' + animatedBackground.id)
+                }
+
+                backgrounds = (backgrounds || []).filter(bg => {
+                    if (bg.id == delId) {
+                        browser.storage.local.remove('background-' + bg.id);
+                        return false;
+                    }
+                    return true;
+                });
+                return browser.storage.local.set({backgrounds});
+            }).then(() => this.reloadBackgrounds());
+        }
     }
-  },
-  methods: {
-    togglePreview(bg) {
-
-    },
-    reloadBackgrounds() {
-      return browser.storage.local.get([
-        'backgrounds',
-        'animatedBackground'
-      ]).then(res => {
-        this.cachedBackgrounds = [];
-        if (res.backgrounds) {
-          this.cachedBackgrounds.push(...res.backgrounds.map(background => ({
-            background: background,
-            animated: false,
-            preview: false
-          })));
-        }
-        if (res.animatedBackground) {
-          this.cachedBackgrounds.push({
-            background: res.animatedBackground,
-            animated: true,
-            preview: false
-          });
-        }
-      });
-    },
-    async openBgUploader() {
-      let { name } = await browser.runtime.getBrowserInfo();
-      if (name == 'Fennec') {
-        browser.tabs.create({
-          url: browser.extension.getURL('source/panels/bgpicker/index.html'),
-          active: true
-        });
-      } else {
-        browser.windows.create({
-          type: 'detached_panel',
-          url: browser.extension.getURL('source/panels/bgpicker/index.html'),
-          width: 645,
-          height: 425
-        });
-      }
-    },
-    deleteBackground(toDelete) {
-      let delId = toDelete.background.id;
-
-      browser.storage.local.get([
-        'backgrounds',
-        'animatedBackground'
-      ]).then(({ backgrounds, animatedBackground }) => {
-        if ((animatedBackground || {}).id == delId) {
-          browser.storage.local.remove('animatedBackground');
-          browser.storage.local.remove('background-' + animatedBackground.id)
-        }
-
-        backgrounds = (backgrounds || []).filter(bg => {
-          if (bg.id == delId) {
-            browser.storage.local.remove('background-' + bg.id);
-            return false;
-          }
-          return true;
-        });
-        return browser.storage.local.set({ backgrounds });
-      }).then(() => this.reloadBackgrounds());
-    }
-  }
 }

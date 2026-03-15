@@ -1,20 +1,15 @@
-import {
-  events,
-  eventValueExtendedModes,
-  eventHasTarget,
-  fxHasPlayerEnemyVariants,
-  eventType
-} from '../events.js';
+import {eventHasTarget, events, eventType, eventValueExtendedModes} from '../events.js';
 import ExpressionEditor from './expression-editor.js';
 import * as clipboard from '../clipboard.js';
-import /* non-ES6 */ '../../../shared/expval.js';
+import '../../../shared/expval.js';
+
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 
 let nonce = 0;
 
 export default {
-  template: html`
+    template: html`
     <div>
       <div>
         <b>Event</b>
@@ -202,89 +197,93 @@ export default {
       </template>
     </div>
   `,
-  props: ['nodes', 'node', 'trigger'],
-  components: { ExpressionEditor },
-  data: () => {
-    return {
-      nonce: nonce++,
-      events,
-      eventValueExtendedModes,
-      predicateFocused: false,
-      clipboard: clipboard.clipboard
+    props: ['nodes', 'node', 'trigger'],
+    components: {ExpressionEditor},
+    data: () => {
+        return {
+            nonce: nonce++,
+            events,
+            eventValueExtendedModes,
+            predicateFocused: false,
+            clipboard: clipboard.clipboard
+        }
+    },
+    computed: {
+        dropdownMode() {
+            return eventType(this.trigger.event);
+        },
+        eventListValue: {
+            get() {
+                return this.dropdownMode.event;
+            },
+            set(value) {
+                this.trigger.event = value;
+            }
+        },
+        eventSet() {
+            return new Set(this.events);
+        },
+        showExpressionEditor() {
+            return (
+                this.eventValueExtendedModes[this.trigger.event] ||
+                this.trigger.predicateExpression ||
+                this.predicateFocused
+            );
+        },
+        variableNameError() {
+            try {
+                ExpVal.substitute(this.trigger.setVariable, {});
+                return null;
+            } catch (ex) {
+                return ex.toString();
+            }
+        },
+        ...clipboard.computed
+    },
+    watch: {
+        'trigger.setVariable'(newVal) {
+            let sanitized = newVal.replace(/^[^$#A-Za-z_]|[^$#A-Za-z0-9_{}]/g, '_');
+            if (sanitized != newVal)
+                this.trigger.setVariable = sanitized;
+        }
+    },
+    methods: {
+        allowsCrossfade(trigger) {
+            return (
+                trigger.mode == 'goto' &&
+                this.hasTarget(trigger) &&
+                this.targetHasAudio(trigger)
+            );
+        },
+        allowsPreserveLocation(trigger) {
+            return (
+                this.hasTarget(trigger) &&
+                this.targetHasAudio(trigger)
+            );
+        },
+        focus(node) {
+            this.$emit('focus', node);
+        },
+        targetHasAudio(trigger) {
+            let node = this.nodes.filter(node => node.id == trigger.target)[0];
+            if (!node) return false;
+            return !!node.audio;
+        },
+        hasTarget(trigger) {
+            return eventHasTarget[trigger.mode];
+        },
+        shiftTrigger(node, trigger, dir) {
+            let index = node.triggers.indexOf(trigger);
+            node.triggers.splice(index, 1);
+            node.triggers.splice(index + dir, 0, trigger);
+            this.$emit('change');
+        },
+        removeTrigger(node, trigger) {
+            node.triggers.splice(node.triggers.indexOf(trigger), 1);
+            this.$emit('change');
+        },
+        copyTrigger(trigger) {
+            this.copiedTrigger = trigger;
+        }
     }
-  },
-  computed: {
-    dropdownMode() {
-      return eventType(this.trigger.event);
-    },
-    eventListValue: {
-      get() { return this.dropdownMode.event; },
-      set(value) { this.trigger.event = value; }
-    },
-    eventSet() {
-      return new Set(this.events);
-    },
-    showExpressionEditor() {
-      return (
-        this.eventValueExtendedModes[this.trigger.event] ||
-        this.trigger.predicateExpression ||
-        this.predicateFocused
-      );
-    },
-    variableNameError() {
-      try {
-        ExpVal.substitute(this.trigger.setVariable, {});
-        return null;
-      } catch(ex) {
-        return ex.toString();
-      }
-    },
-    ...clipboard.computed
-  },
-  watch: {
-    'trigger.setVariable'(newVal) {
-      let sanitized = newVal.replace(/^[^$#A-Za-z_]|[^$#A-Za-z0-9_{}]/g, '_');
-      if (sanitized != newVal)
-        this.trigger.setVariable = sanitized;
-    }
-  },
-  methods: {
-    allowsCrossfade(trigger) {
-      return (
-        trigger.mode == 'goto' &&
-        this.hasTarget(trigger) &&
-        this.targetHasAudio(trigger)
-      );
-    },
-    allowsPreserveLocation(trigger) {
-      return (
-        this.hasTarget(trigger) &&
-        this.targetHasAudio(trigger)
-      );
-    },
-    focus(node) {
-      this.$emit('focus', node);
-    },
-    targetHasAudio(trigger) {
-      let node = this.nodes.filter(node => node.id == trigger.target)[0];
-      if (!node) return false;
-      return !!node.audio;
-    },
-    hasTarget(trigger) {
-      return eventHasTarget[trigger.mode];
-    },
-    shiftTrigger(node, trigger, dir) {
-      let index = node.triggers.indexOf(trigger);
-      node.triggers.splice(index, 1);
-      node.triggers.splice(index+dir, 0, trigger);
-      this.$emit('change');
-    },
-    removeTrigger(node, trigger) {
-      node.triggers.splice(node.triggers.indexOf(trigger), 1);
-      this.$emit('change');
-    },
-    copyTrigger(trigger) {
-      this.copiedTrigger = trigger;
-    }
-  }
 }

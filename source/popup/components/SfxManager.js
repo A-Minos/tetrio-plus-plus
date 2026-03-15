@@ -1,8 +1,9 @@
 import OptionToggle from './OptionToggle.js'
+
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
-  template: html`
+    template: html`
     <div class="component-wrapper">
       <div class="control-group">
         <button @click="openSfxEditor" title="Opens the sfx editor tab">
@@ -31,23 +32,23 @@ export default {
       </option-toggle>
     </div>
   `,
-  data: () => ({ cachedSfxAtlasSrc: null }),
-  components: { OptionToggle },
-  computed: {
-    sfxAtlasSrc() {
-      browser.storage.local.get('customSounds').then(({ customSounds }) => {
-        if (this.cachedSfxAtlasSrc != customSounds)
-          this.cachedSfxAtlasSrc = customSounds;
-      });
-      return this.cachedSfxAtlasSrc;
+    data: () => ({cachedSfxAtlasSrc: null}),
+    components: {OptionToggle},
+    computed: {
+        sfxAtlasSrc() {
+            browser.storage.local.get('customSounds').then(({customSounds}) => {
+                if (this.cachedSfxAtlasSrc != customSounds)
+                    this.cachedSfxAtlasSrc = customSounds;
+            });
+            return this.cachedSfxAtlasSrc;
+        },
     },
-  },
-  methods: {
-    openSfxEditor() {
-      browser.tabs.create({
-        url: browser.extension.getURL('source/panels/sfxcomposer/index.html'),
-        active: true
-      });
-    },
-  }
+    methods: {
+        openSfxEditor() {
+            browser.tabs.create({
+                url: browser.extension.getURL('source/panels/sfxcomposer/index.html'),
+                active: true
+            });
+        },
+    }
 }

@@ -3,7 +3,7 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 const VALID_BAG_CHARS = ['i', 'o', 'l', 'j', 'z', 's', 't', 'oo'];
 
 const app = new Vue({
-  template: html`
+    template: html`
     <div class="app">
       <div class="tools">
         <h3>Tools</h3>
@@ -82,154 +82,154 @@ const app = new Vue({
       </div>
     </div>
   `,
-  data: {
-    width: 10,
-    height: 40,
-    map: [],
-    tools: ['i', 'o', 'l', 'j', 'z', 's', 't', 'empty', 'garbage', 'darkgarbage'],
-    extra_pieces: [['oo', 'yellow']],
-    bag: [],
-    hold: null,
-    tool: 'empty',
-    removing: false,
-    clicking: false,
-    mapString: "",
-    modified: false
-  },
-  mounted() {
-    document.addEventListener('mousedown', () => this.startEditing());
-    document.addEventListener('mouseup', () => this.endEditing());
-    this.regenerateMap();
-    this.recalculateMapString();
-    let match = /map=([^&]+)/.exec(window.location.search);
-    if (match) {
-      this.loadMapString(decodeURIComponent(match[1]));
-      this.recalculateMapString();
-    }
-  },
-  computed: {
-    bagString: {
-      get() {
-        return this.bag.join(',');
-      },
-      set(val) {
-        this.bag = val.split(',');
-      }
+    data: {
+        width: 10,
+        height: 40,
+        map: [],
+        tools: ['i', 'o', 'l', 'j', 'z', 's', 't', 'empty', 'garbage', 'darkgarbage'],
+        extra_pieces: [['oo', 'yellow']],
+        bag: [],
+        hold: null,
+        tool: 'empty',
+        removing: false,
+        clicking: false,
+        mapString: "",
+        modified: false
     },
-    bagError() {
-      if (this.bag.includes('?'))
-        return `Bag contains disallowed seperator character '?'`
-
-      if (this.bag[this.bag.length-1] == '')
-        return `Bag contains a trailing comma`;
-
-      let charErrors = this.bag.filter(entry => VALID_BAG_CHARS.indexOf(entry) == -1);
-      if (charErrors.length > 0)
-        return `Bag contains possibly invalid values: "${charErrors[0]}"`;
-    },
-    holdError() {
-      let error = this.hold && this.hold.length > 0 && VALID_BAG_CHARS.indexOf(this.hold) == -1;
-      if (error) return `Hold contains possibly invalid values`;
-    }
-  },
-  watch: {
-    mapString(val) {
-      this.$refs.mapstring.value = val;
-    },
-    bag() {
-      this.deferRecalcMapString();
-    },
-    hold() {
-      this.deferRecalcMapString();
-    },
-    width() {
-      this.regenerateMap()
-    },
-    height() {
-      this.regenerateMap()
-    }
-  },
-  methods: {
-    regenerateMap() {
-      let oldHeight = this.map.length;
-      this.map = new Array(this.height).fill(0).map((el, y) => {
-        return new Array(this.width).fill(0).map((el, x) => {
-          let ny = y + oldHeight - this.height;
-          if (this.map[ny]?.[x]) return this.map[ny][x];
-          return { mino: 'empty' }
-        });
-      });
-      this.deferRecalcMapString();
-    },
-    startEditing() {
-      this.clicking = true;
-      this.modified = false;
-    },
-    endEditing() {
-      this.clicking = false;
-      if (this.modified) {
+    mounted() {
+        document.addEventListener('mousedown', () => this.startEditing());
+        document.addEventListener('mouseup', () => this.endEditing());
+        this.regenerateMap();
         this.recalculateMapString();
-        this.modified = false;
-      }
-    },
-    edit(elem) {
-      if (!this.clicking) return;
-      elem.mino = this.tool;
-      this.modified = true;
-    },
-    addToolToBag() {
-      this.bag.push(this.tool);
-      this.deferRecalcMapString();
-    },
-    setHoldToTool() {
-      this.hold = this.tool;
-      this.deferRecalcMapString()
-    },
-    deferRecalcMapString() {
-      setTimeout(() => this.recalculateMapString());
-    },
-    recalculateMapString() {
-      this.mapString = this.map.flatMap(row => {
-        return row.map(el => {
-          if (el.mino == 'empty') return '_';
-          if (el.mino == 'garbage') return '#';
-          if (el.mino == 'darkgarbage') return '@';
-          return el.mino;
-        });
-      }).join('');
-      let bagged = this.bag.join(',').replace(/\?/g, '');
-      this.mapString += `?${bagged}?${this.hold || ""}`;
-    },
-    loadMapString(mapString) {
-      let x = 0, y = 0;
-
-      let [map, bag, hold] = mapString.split('?');
-
-      for (let char of map) {
-        if (char == '_') this.map[y][x].mino = 'empty';
-        else if (char == '#') this.map[y][x].mino = 'garbage';
-        else if (char == '@') this.map[y][x].mino = 'darkgarbage';
-        else if (char == 'i') this.map[y][x].mino = 'i';
-        else if (char == 'l') this.map[y][x].mino = 'l';
-        else if (char == 'j') this.map[y][x].mino = 'j';
-        else if (char == 's') this.map[y][x].mino = 's';
-        else if (char == 'z') this.map[y][x].mino = 'z';
-        else if (char == 'o') this.map[y][x].mino = 'o';
-        else if (char == 't') this.map[y][x].mino = 't';
-        else continue;
-        x++;
-        if (x >= 10) {
-          x = 0;
-          y++;
+        let match = /map=([^&]+)/.exec(window.location.search);
+        if (match) {
+            this.loadMapString(decodeURIComponent(match[1]));
+            this.recalculateMapString();
         }
-        if (y >= 40)
-          break;
-      }
+    },
+    computed: {
+        bagString: {
+            get() {
+                return this.bag.join(',');
+            },
+            set(val) {
+                this.bag = val.split(',');
+            }
+        },
+        bagError() {
+            if (this.bag.includes('?'))
+                return `Bag contains disallowed seperator character '?'`
 
-      this.bag = (bag || "").split(',').filter(el => el.length > 0);
-      this.hold = (hold || "");
+            if (this.bag[this.bag.length - 1] == '')
+                return `Bag contains a trailing comma`;
+
+            let charErrors = this.bag.filter(entry => VALID_BAG_CHARS.indexOf(entry) == -1);
+            if (charErrors.length > 0)
+                return `Bag contains possibly invalid values: "${charErrors[0]}"`;
+        },
+        holdError() {
+            let error = this.hold && this.hold.length > 0 && VALID_BAG_CHARS.indexOf(this.hold) == -1;
+            if (error) return `Hold contains possibly invalid values`;
+        }
+    },
+    watch: {
+        mapString(val) {
+            this.$refs.mapstring.value = val;
+        },
+        bag() {
+            this.deferRecalcMapString();
+        },
+        hold() {
+            this.deferRecalcMapString();
+        },
+        width() {
+            this.regenerateMap()
+        },
+        height() {
+            this.regenerateMap()
+        }
+    },
+    methods: {
+        regenerateMap() {
+            let oldHeight = this.map.length;
+            this.map = new Array(this.height).fill(0).map((el, y) => {
+                return new Array(this.width).fill(0).map((el, x) => {
+                    let ny = y + oldHeight - this.height;
+                    if (this.map[ny]?.[x]) return this.map[ny][x];
+                    return {mino: 'empty'}
+                });
+            });
+            this.deferRecalcMapString();
+        },
+        startEditing() {
+            this.clicking = true;
+            this.modified = false;
+        },
+        endEditing() {
+            this.clicking = false;
+            if (this.modified) {
+                this.recalculateMapString();
+                this.modified = false;
+            }
+        },
+        edit(elem) {
+            if (!this.clicking) return;
+            elem.mino = this.tool;
+            this.modified = true;
+        },
+        addToolToBag() {
+            this.bag.push(this.tool);
+            this.deferRecalcMapString();
+        },
+        setHoldToTool() {
+            this.hold = this.tool;
+            this.deferRecalcMapString()
+        },
+        deferRecalcMapString() {
+            setTimeout(() => this.recalculateMapString());
+        },
+        recalculateMapString() {
+            this.mapString = this.map.flatMap(row => {
+                return row.map(el => {
+                    if (el.mino == 'empty') return '_';
+                    if (el.mino == 'garbage') return '#';
+                    if (el.mino == 'darkgarbage') return '@';
+                    return el.mino;
+                });
+            }).join('');
+            let bagged = this.bag.join(',').replace(/\?/g, '');
+            this.mapString += `?${bagged}?${this.hold || ""}`;
+        },
+        loadMapString(mapString) {
+            let x = 0, y = 0;
+
+            let [map, bag, hold] = mapString.split('?');
+
+            for (let char of map) {
+                if (char == '_') this.map[y][x].mino = 'empty';
+                else if (char == '#') this.map[y][x].mino = 'garbage';
+                else if (char == '@') this.map[y][x].mino = 'darkgarbage';
+                else if (char == 'i') this.map[y][x].mino = 'i';
+                else if (char == 'l') this.map[y][x].mino = 'l';
+                else if (char == 'j') this.map[y][x].mino = 'j';
+                else if (char == 's') this.map[y][x].mino = 's';
+                else if (char == 'z') this.map[y][x].mino = 'z';
+                else if (char == 'o') this.map[y][x].mino = 'o';
+                else if (char == 't') this.map[y][x].mino = 't';
+                else continue;
+                x++;
+                if (x >= 10) {
+                    x = 0;
+                    y++;
+                }
+                if (y >= 40)
+                    break;
+            }
+
+            this.bag = (bag || "").split(',').filter(el => el.length > 0);
+            this.hold = (hold || "");
+        }
     }
-  }
 });
 
 app.$mount('#app');

@@ -1,8 +1,9 @@
 import OptionToggle from './OptionToggle.js';
+
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
-  template: html`
+    template: html`
     <div class="component-wrapper">
       <div class="control-group">
         <button @click="openMusicEditor" title="Opens the music editor window">
@@ -49,33 +50,33 @@ export default {
       </option-toggle>
     </div>
   `,
-  data: () => ({ cache: { music: null } }),
-  components: { OptionToggle },
-  computed: {
-    music() {
-      browser.storage.local.get('music').then(({ music }) => {
-        this.cache.music = music;
-      });
-      if (!this.cache.music) return [];
-      return this.cache.music;
-    }
-  },
-  methods: {
-    openMusicEditor() {
-      browser.tabs.create({
-        url: browser.extension.getURL(
-          'source/panels/musiceditor/index.html'
-        ),
-        active: true
-      });
+    data: () => ({cache: {music: null}}),
+    components: {OptionToggle},
+    computed: {
+        music() {
+            browser.storage.local.get('music').then(({music}) => {
+                this.cache.music = music;
+            });
+            if (!this.cache.music) return [];
+            return this.cache.music;
+        }
     },
-    openMusicGraphEditor() {
-      browser.tabs.create({
-        url: browser.extension.getURL(
-          'source/panels/musicgrapheditor/index.html'
-        ),
-        active: true
-      });
+    methods: {
+        openMusicEditor() {
+            browser.tabs.create({
+                url: browser.extension.getURL(
+                    'source/panels/musiceditor/index.html'
+                ),
+                active: true
+            });
+        },
+        openMusicGraphEditor() {
+            browser.tabs.create({
+                url: browser.extension.getURL(
+                    'source/panels/musicgrapheditor/index.html'
+                ),
+                active: true
+            });
+        }
     }
-  }
 }

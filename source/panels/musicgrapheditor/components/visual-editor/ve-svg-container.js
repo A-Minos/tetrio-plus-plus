@@ -1,6 +1,6 @@
 const html = arg => arg.join('');
 export default {
-  template: html`
+    template: html`
     <svg style="width: 100%; height: 100%;">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
@@ -67,15 +67,15 @@ export default {
       />
     </svg>
   `,
-  props: ['camera', 'selectRect'],
-  methods: {
-    editorRect() {
-      return document.querySelector('.visual-editor').getBoundingClientRect();
+    props: ['camera', 'selectRect'],
+    methods: {
+        editorRect() {
+            return document.querySelector('.visual-editor').getBoundingClientRect();
+        }
+    },
+    computed: {
+        svgTransform() {
+            return `translate(${this.camera.x / this.camera.scale}, ${this.camera.y / this.camera.scale})`
+        }
     }
-  },
-  computed: {
-    svgTransform() {
-      return `translate(${this.camera.x / this.camera.scale}, ${this.camera.y / this.camera.scale})`
-    }
-  }
 }

@@ -2,7 +2,7 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 const ctx = new AudioContext();
 
 export default {
-  template: html`
+    template: html`
     <div class="audioeditor" v-if="!song">
       Pick a song!
     </div>
@@ -95,91 +95,91 @@ export default {
       </div>
     </div>
   `,
-  props: ['song', 'builtin'],
-  data: () => ({
-    cachedSrc: null,
-    updateInterval: null,
-    currentTime: 0,
-    playingBuffer: null
-  }),
-  mounted() {
-    this.updateInterval = setInterval(() => {
-      if (this.playingBuffer) {
-        this.currentTime += 16/1000;
-        if (this.currentTime > this.loopEnd/1000)
-          this.currentTime -= this.song.metadata.loopLength/1000;
-        return;
-      }
-      if (!this.$refs.player) return;
-      this.currentTime = this.$refs.player.currentTime;
-    }, 16);
-  },
-  beforeDestroy() {
-    clearInterval(this.updateInterval);
-  },
-  computed: {
-    loopEnd: {
-      get() {
-        return (
-          this.song.metadata.loopStart +
-          this.song.metadata.loopLength
-        );
-      },
-      set(end) {
-        this.song.metadata.loopLength = end - this.song.metadata.loopStart;
-      }
+    props: ['song', 'builtin'],
+    data: () => ({
+        cachedSrc: null,
+        updateInterval: null,
+        currentTime: 0,
+        playingBuffer: null
+    }),
+    mounted() {
+        this.updateInterval = setInterval(() => {
+            if (this.playingBuffer) {
+                this.currentTime += 16 / 1000;
+                if (this.currentTime > this.loopEnd / 1000)
+                    this.currentTime -= this.song.metadata.loopLength / 1000;
+                return;
+            }
+            if (!this.$refs.player) return;
+            this.currentTime = this.$refs.player.currentTime;
+        }, 16);
     },
-    editingSrc() {
-      let key = 'song-' + this.song.id;
-      browser.storage.local.get(key).then(result => {
-        this.cachedSrc = result[key];
-      });
-      return this.cachedSrc;
+    beforeDestroy() {
+        clearInterval(this.updateInterval);
     },
-    async decodedAudioAPIBuffer() {
-      let buffer = await (await fetch(this.editingSrc)).arrayBuffer();
-      return await ctx.decodeAudioData(buffer);
+    computed: {
+        loopEnd: {
+            get() {
+                return (
+                    this.song.metadata.loopStart +
+                    this.song.metadata.loopLength
+                );
+            },
+            set(end) {
+                this.song.metadata.loopLength = end - this.song.metadata.loopStart;
+            }
+        },
+        editingSrc() {
+            let key = 'song-' + this.song.id;
+            browser.storage.local.get(key).then(result => {
+                this.cachedSrc = result[key];
+            });
+            return this.cachedSrc;
+        },
+        async decodedAudioAPIBuffer() {
+            let buffer = await (await fetch(this.editingSrc)).arrayBuffer();
+            return await ctx.decodeAudioData(buffer);
+        },
+        msTime() {
+            return Math.floor(this.currentTime * 1000);
+        },
+        canSetEnd() {
+            return this.msTime > this.song.metadata.loopStart;
+        }
     },
-    msTime() {
-      return Math.floor(this.currentTime * 1000);
-    },
-    canSetEnd() {
-      return this.msTime > this.song.metadata.loopStart;
-    }
-  },
-  methods: {
-    async restartLooped() {
-      this.stopLooped();
-      this.$refs.player.pause();
+    methods: {
+        async restartLooped() {
+            this.stopLooped();
+            this.$refs.player.pause();
 
-      let source = ctx.createBufferSource();
-      source.buffer = await this.decodedAudioAPIBuffer;
-      source.connect(ctx.destination);
-      this.playingBuffer = source;
+            let source = ctx.createBufferSource();
+            source.buffer = await this.decodedAudioAPIBuffer;
+            source.connect(ctx.destination);
+            this.playingBuffer = source;
 
-      source.loopStart = this.song.metadata.loopStart/1000;
-      source.loopEnd = this.loopEnd/1000;
-      source.loop = true;
-      source.start(0, this.currentTime);
-    },
-    stopLooped() {
-      if (this.playingBuffer) {
-        this.playingBuffer.stop();
-        this.playingBuffer = null;
-      }
-    },
-    setLoopStart() {
-      this.song.metadata.loop = true;
-      this.song.metadata.loopStart = this.msTime;
-    },
-    setLoopEnd() {
-      this.song.metadata.loop = true;
-      this.song.metadata.loopLength = this.msTime - this.song.metadata.loopStart;
-    },
-    stopLooping() {
-      this.song.metadata.loop = false;
-      this.song.metadata.loopStart = 0;
-      this.song.metadata.loopLength = 0;
+            source.loopStart = this.song.metadata.loopStart / 1000;
+            source.loopEnd = this.loopEnd / 1000;
+            source.loop = true;
+            source.start(0, this.currentTime);
+        },
+        stopLooped() {
+            if (this.playingBuffer) {
+                this.playingBuffer.stop();
+                this.playingBuffer = null;
+            }
+        },
+        setLoopStart() {
+            this.song.metadata.loop = true;
+            this.song.metadata.loopStart = this.msTime;
+        },
+        setLoopEnd() {
+            this.song.metadata.loop = true;
+            this.song.metadata.loopLength = this.msTime - this.song.metadata.loopStart;
+        },
+        stopLooping() {
+            this.song.metadata.loop = false;
+            this.song.metadata.loopStart = 0;
+            this.song.metadata.loopLength = 0;
+        }
     }
-  }
 }

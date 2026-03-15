@@ -12,7 +12,7 @@ import '../shared/drop-handler.js';
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 const app = new Vue({
-  template: html`
+    template: html`
     <div id="app">
       <h1>
         TETR.IO PLUS
@@ -146,6 +146,7 @@ const app = new Vue({
                 Use old OSD icons
               </option-toggle>
             </option-toggle>
+            <button @click="openWOSHIZHAZHA120Customize">Open WOSHIZHAZHA120's Customize</button>
           </div>
         </fieldset>
         <fieldset class="section">
@@ -284,254 +285,258 @@ const app = new Vue({
       </fieldset>
     </div>
   `,
-  components: {
-    OptionToggle,
-    UrlPackLoader,
-    ThemeManager,
-    SkinChanger,
-    OtherSkinsChanger,
-    SfxManager,
-    MusicManager,
-    BackgroundManager,
-    StyleEditor
-  },
-  data: {
-    updateStatus: null,
-    updateHref: null,
-    debugMode: false,
-    contentPack: null,
-    allowURLPackLoader: null,
-    whitelistedLoaderDomains: null,
-    isMobileExtensionPopup: false,
-    commit: null
-  },
-  computed: {
-    isElectron() {
-      return !!browser.electron;
+    components: {
+        OptionToggle,
+        UrlPackLoader,
+        ThemeManager,
+        SkinChanger,
+        OtherSkinsChanger,
+        SfxManager,
+        MusicManager,
+        BackgroundManager,
+        StyleEditor
     },
-    showUninstallerButton() {
-      return this.isElectron && browser.runtime.getManifest().browser_specific_settings.desktop_client.show_uninstaller_button;
+    data: {
+        updateStatus: null,
+        updateHref: null,
+        debugMode: false,
+        contentPack: null,
+        allowURLPackLoader: null,
+        whitelistedLoaderDomains: null,
+        isMobileExtensionPopup: false,
+        commit: null
     },
-    version() {
-      return browser.runtime.getManifest().version;
-    },
-    contentPackIssue() {
-      if (!this.allowURLPackLoader)
-        return 'remote pack loading by URL is not enabled';
+    computed: {
+        isElectron() {
+            return !!browser.electron;
+        },
+        showUninstallerButton() {
+            return this.isElectron && browser.runtime.getManifest().browser_specific_settings.desktop_client.show_uninstaller_button;
+        },
+        version() {
+            return browser.runtime.getManifest().version;
+        },
+        contentPackIssue() {
+            if (!this.allowURLPackLoader)
+                return 'remote pack loading by URL is not enabled';
 
-      let url = new URL(this.contentPack);
-      if (this.whitelistedLoaderDomains.indexOf(url.origin) == -1)
-        return 'the domain (' + url.origin + ') isn\'t whitelisted';
+            let url = new URL(this.contentPack);
+            if (this.whitelistedLoaderDomains.indexOf(url.origin) == -1)
+                return 'the domain (' + url.origin + ') isn\'t whitelisted';
 
-      return null;
-    }
-  },
-  async mounted() {
-    if (await this.isMobileBrowser() && await this.isExtensionPopup()) {
-      this.isMobileExtensionPopup = true;
-    }
-
-    let prefix = this.isElectron ? 'tetrio-plus-internal://resources/' : '../../../resources/';
-
-    function fetchCommitFile(file) {
-      return fetch(prefix + file)
-        .then(res => res.text())
-        .then(text => text.split('\n').filter(line => !line.startsWith('#')).join('').trim())
-        .catch(ex => null)
-    }
-    const release_commit = await fetchCommitFile('release-commit');
-    const previous_commit = await fetchCommitFile('ci-commit-previous');
-    const override = await fetchCommitFile('override-commit');
-    this.commit = override || ((release_commit != previous_commit) ? await fetchCommitFile('ci-commit') : null);
-
-    let str = '';
-    window.addEventListener('keydown', evt => {
-      str = (str + evt.key).slice(-5);
-      if (str == 'debug')
-        this.enableDebugMode();
-    });
-
-    if (browser.tabs.query) {
-      browser.tabs.query({
-        active: true,
-        windowId: browser.windows.WINDOW_ID_CURRENT
-      }).then(tabs => {
-        let port = browser.runtime.connect({ name: 'info-channel' });
-        port.postMessage({ type: 'getUrlFromTab', tabId: tabs[0].id });
-        port.onMessage.addListener(msg => {
-          this.refreshContentPackInfo();
-          if (msg.type != 'getUrlFromTabResult') return;
-          let { useContentPack } = new URL(msg.url)
-            .search
-            .slice(1)
-            .split('&')
-            .map(e => e.split('='))
-            .reduce((obj, [key, value]) => {
-              obj[key] = value;
-              return obj;
-            }, {});
-          if (!useContentPack) return;
-          this.contentPack = decodeURIComponent(useContentPack);
-        });
-      })
-    } else {
-      // Use this syntax to avoid making the mdn verifier angery.
-      // This is never called on firefox.
-      let foo = browser.tabs;
-      foo.electronOnMainNavigate(url => {
-        this.refreshContentPackInfo();
-        let match = /\?useContentPack=([^&]+)/.exec(url);
-        if (!match) {
-          this.contentPack = null;
-          return;
+            return null;
         }
-        this.contentPack = decodeURIComponent(match[1]);
-      })
-    }
-    this.updateCheck();
-  },
-  methods: {
-    async isMobileBrowser() {
-      let { name } = await browser.runtime.getBrowserInfo();
-      return name == 'Fennec';
     },
-    async isExtensionPopup() {
-      return await browser.tabs.getCurrent() == null;
-    },
-    async requestDownloadPermission() {
-      if (!await browser.permissions.request({ permissions: ['downloads'] })) {
-        await browser.storage.local.set({ enableReplaySaver: false });
-        alert('Downloads permission not granted, replay saver disabled.');
-      }
-    },
-    openInNewTab() {
-      browser.tabs.create({ url: window.location.href, active: true });
-      window.close();
-    },
-    openInBrowser(url) {
-      window.openInBrowser(url)
-    },
-    refreshContentPackInfo() {
-      browser.storage.local.get([
-        'allowURLPackLoader',
-        'whitelistedLoaderDomains'
-      ]).then(cfg => {
-        this.allowURLPackLoader = cfg.allowURLPackLoader;
-        this.whitelistedLoaderDomains = cfg.whitelistedLoaderDomains || "";
-      });
-    },
-    clearPack() {
-      // Use this syntax to avoid making the mdn verifier angery.
-      // This is never called on firefox.
-      let foo = browser.tabs;
-      foo.electronClearPack();
-    },
-    enableDebugMode() {
-      console.log("Enabled debug mode")
-      this.debugMode = true;
-    },
-    async openPanel(url, width=600, height=520) {
-      if (await this.isMobileBrowser()) {
-        browser.tabs.create({
-          url: browser.extension.getURL(url),
-          active: true
-        });
-      } else {
-        browser.windows.create({
-          type: 'detached_panel',
-          url: browser.extension.getURL(url),
-          width: width,
-          height: height
-        });
-      }
-    },
-    async openSettingsIO(installUrl) {
-      let url = 'source/panels/settingsImportExport/index.html';
-      if (installUrl) url += '?install=' + encodeURIComponent(installUrl);
-      await this.openPanel(url);
-    },
-    async openFixes() {
-      await this.openPanel('source/panels/fixes/index.html', 1200, 720);
-    },
-    async openTemplates() {
-      await this.openPanel('source/panels/templates/index.html', 600, 170);
-    },
-    openMonetizationInfo() {
-      browser.windows.create({
-        type: 'detached_panel',
-        url: browser.extension.getURL(
-          'source/panels/monetizationinfo/index.html'
-        ),
-        width: 750,
-        height: 350
-      });
-    },
-    openTouchEditor() {
-      browser.tabs.create({
-        url: browser.extension.getURL(
-          'source/panels/touchcontroleditor/index.html'
-        ),
-        active: true
-      });
-    },
-    openStorageTool() {
-      browser.tabs.create({
-        url: browser.extension.getURL(
-          'source/panels/storagetool/index.html'
-        ),
-        active: true
-      });
-    },
-    openSource(evt) {
-      if (this.isElectron) {
-        evt.preventDefault();
-        openInBrowser(evt.target.href);
-      }
-    },
-    uninstall() {
-      browser.management.uninstallSelf().catch(ex => {
-        alert(ex.toString());
-      });
-    },
-    async updateCheck() {
-      let res = await browser.storage.local.get('enableUpdateCheck');
-      if (!res.enableUpdateCheck) {
-        this.updateStatus = null;
-        this.updateHref = null;
-        return;
-      }
-      this.updateStatus = 'Checking for updates...';
-      this.updateHref = null;
-
-      function compare(version, target) {
-        version = version.split('.').map(n => +n);
-        target = target.split('.').map(n => +n);
-        for (let i = 0; i < 3; i++) {
-          if (version[i] > target[i]) return 1;
-          if (version[i] < target[i]) return -1;
+    async mounted() {
+        if (await this.isMobileBrowser() && await this.isExtensionPopup()) {
+            this.isMobileExtensionPopup = true;
         }
-        return 0;
-      }
 
-      try {
-        const latest = await window.fetchGitlabReleasesJson();
-        const regex = /^electron-v(\d+\.\d+\.\d+)-tetrio-v\d+$/;
+        let prefix = this.isElectron ? 'tetrio-plus-internal://resources/' : '../../../resources/';
 
-        const target = regex.exec(latest[0].tag)[1];
-        const version = this.version;
-        if (compare(version, target) == -1) {
-          this.updateStatus = 'Update available: ' + target;
-          const baseUrl = 'https://gitlab.com/UniQMG/tetrio-plus/-/releases';
-          this.updateHref = `${baseUrl}/${latest[0].tag}`;
+        function fetchCommitFile(file) {
+            return fetch(prefix + file)
+                .then(res => res.text())
+                .then(text => text.split('\n').filter(line => !line.startsWith('#')).join('').trim())
+                .catch(ex => null)
+        }
+
+        const release_commit = await fetchCommitFile('release-commit');
+        const previous_commit = await fetchCommitFile('ci-commit-previous');
+        const override = await fetchCommitFile('override-commit');
+        this.commit = override || ((release_commit != previous_commit) ? await fetchCommitFile('ci-commit') : null);
+
+        let str = '';
+        window.addEventListener('keydown', evt => {
+            str = (str + evt.key).slice(-5);
+            if (str == 'debug')
+                this.enableDebugMode();
+        });
+
+        if (browser.tabs.query) {
+            browser.tabs.query({
+                active: true,
+                windowId: browser.windows.WINDOW_ID_CURRENT
+            }).then(tabs => {
+                let port = browser.runtime.connect({name: 'info-channel'});
+                port.postMessage({type: 'getUrlFromTab', tabId: tabs[0].id});
+                port.onMessage.addListener(msg => {
+                    this.refreshContentPackInfo();
+                    if (msg.type != 'getUrlFromTabResult') return;
+                    let {useContentPack} = new URL(msg.url)
+                        .search
+                        .slice(1)
+                        .split('&')
+                        .map(e => e.split('='))
+                        .reduce((obj, [key, value]) => {
+                            obj[key] = value;
+                            return obj;
+                        }, {});
+                    if (!useContentPack) return;
+                    this.contentPack = decodeURIComponent(useContentPack);
+                });
+            })
         } else {
-          this.updateStatus = 'Using latest version';
+            // Use this syntax to avoid making the mdn verifier angery.
+            // This is never called on firefox.
+            let foo = browser.tabs;
+            foo.electronOnMainNavigate(url => {
+                this.refreshContentPackInfo();
+                let match = /\?useContentPack=([^&]+)/.exec(url);
+                if (!match) {
+                    this.contentPack = null;
+                    return;
+                }
+                this.contentPack = decodeURIComponent(match[1]);
+            })
         }
-      } catch(ex) {
-        this.updateStatus = 'Failed to check for updates';
-        console.error('Failed to check for updates:', ex);
-      }
+        this.updateCheck();
+    },
+    methods: {
+        async isMobileBrowser() {
+            let {name} = await browser.runtime.getBrowserInfo();
+            return name == 'Fennec';
+        },
+        async isExtensionPopup() {
+            return await browser.tabs.getCurrent() == null;
+        },
+        async requestDownloadPermission() {
+            if (!await browser.permissions.request({permissions: ['downloads']})) {
+                await browser.storage.local.set({enableReplaySaver: false});
+                alert('Downloads permission not granted, replay saver disabled.');
+            }
+        },
+        openInNewTab() {
+            browser.tabs.create({url: window.location.href, active: true});
+            window.close();
+        },
+        openInBrowser(url) {
+            window.openInBrowser(url)
+        },
+        refreshContentPackInfo() {
+            browser.storage.local.get([
+                'allowURLPackLoader',
+                'whitelistedLoaderDomains'
+            ]).then(cfg => {
+                this.allowURLPackLoader = cfg.allowURLPackLoader;
+                this.whitelistedLoaderDomains = cfg.whitelistedLoaderDomains || "";
+            });
+        },
+        clearPack() {
+            // Use this syntax to avoid making the mdn verifier angery.
+            // This is never called on firefox.
+            let foo = browser.tabs;
+            foo.electronClearPack();
+        },
+        enableDebugMode() {
+            console.log("Enabled debug mode")
+            this.debugMode = true;
+        },
+        async openPanel(url, width = 600, height = 520) {
+            if (await this.isMobileBrowser()) {
+                browser.tabs.create({
+                    url: browser.extension.getURL(url),
+                    active: true
+                });
+            } else {
+                browser.windows.create({
+                    type: 'detached_panel',
+                    url: browser.extension.getURL(url),
+                    width: width,
+                    height: height
+                });
+            }
+        },
+        async openSettingsIO(installUrl) {
+            let url = 'source/panels/settingsImportExport/index.html';
+            if (installUrl) url += '?install=' + encodeURIComponent(installUrl);
+            await this.openPanel(url);
+        },
+        async openFixes() {
+            await this.openPanel('source/panels/fixes/index.html', 1200, 720);
+        },
+        async openTemplates() {
+            await this.openPanel('source/panels/templates/index.html', 600, 170);
+        },
+        openMonetizationInfo() {
+            browser.windows.create({
+                type: 'detached_panel',
+                url: browser.extension.getURL(
+                    'source/panels/monetizationinfo/index.html'
+                ),
+                width: 750,
+                height: 350
+            });
+        },
+        openTouchEditor() {
+            browser.tabs.create({
+                url: browser.extension.getURL(
+                    'source/panels/touchcontroleditor/index.html'
+                ),
+                active: true
+            });
+        },
+        openStorageTool() {
+            browser.tabs.create({
+                url: browser.extension.getURL(
+                    'source/panels/storagetool/index.html'
+                ),
+                active: true
+            });
+        },
+        openSource(evt) {
+            if (this.isElectron) {
+                evt.preventDefault();
+                openInBrowser(evt.target.href);
+            }
+        },
+        uninstall() {
+            browser.management.uninstallSelf().catch(ex => {
+                alert(ex.toString());
+            });
+        },
+        async openWOSHIZHAZHA120Customize() {
+            await this.openPanel('source/WOSHIZHAZHA120/popup/index.html', 1200, 720);
+        },
+        async updateCheck() {
+            let res = await browser.storage.local.get('enableUpdateCheck');
+            if (!res.enableUpdateCheck) {
+                this.updateStatus = null;
+                this.updateHref = null;
+                return;
+            }
+            this.updateStatus = 'Checking for updates...';
+            this.updateHref = null;
+
+            function compare(version, target) {
+                version = version.split('.').map(n => +n);
+                target = target.split('.').map(n => +n);
+                for (let i = 0; i < 3; i++) {
+                    if (version[i] > target[i]) return 1;
+                    if (version[i] < target[i]) return -1;
+                }
+                return 0;
+            }
+
+            try {
+                const latest = await window.fetchGitlabReleasesJson();
+                const regex = /^electron-v(\d+\.\d+\.\d+)-tetrio-v\d+$/;
+
+                const target = regex.exec(latest[0].tag)[1];
+                const version = this.version;
+                if (compare(version, target) == -1) {
+                    this.updateStatus = 'Update available: ' + target;
+                    const baseUrl = 'https://gitlab.com/UniQMG/tetrio-plus/-/releases';
+                    this.updateHref = `${baseUrl}/${latest[0].tag}`;
+                } else {
+                    this.updateStatus = 'Using latest version';
+                }
+            } catch (ex) {
+                this.updateStatus = 'Failed to check for updates';
+                console.error('Failed to check for updates:', ex);
+            }
+        }
     }
-  }
 });
 
 app.$mount('#app');

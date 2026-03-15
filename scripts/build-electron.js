@@ -13,44 +13,47 @@ hash.end();
 const actualHash = hash.read();
 
 if (actualHash.toLowerCase() != vanillaHash.toLowerCase()) {
-  console.error("TETR.IO app.asar hash does not match");
-  console.error("TETR.IO Desktop was probably updated");
-  console.log("Expected:", vanillaHash);
-  console.log("Got:", actualHash);
-  process.exit(1);
+    console.error("TETR.IO app.asar hash does not match");
+    console.error("TETR.IO Desktop was probably updated");
+    console.log("Expected:", vanillaHash);
+    console.log("Got:", actualHash);
+    process.exit(1);
 }
 
 let main = fs.readFileSync('out/main.js');
 let preload = fs.readFileSync('out/preload.js');
 
 fs.writeFileSync(
-  'out/main.js',
-  fs.readFileSync('out/main.js', 'utf8').replace(
-    /^/,
-`const {
+    'out/main.js',
+    fs.readFileSync('out/main.js', 'utf8').replace(
+        /^/,
+        `const {
   onMainWindow,
   modifyWindowSettings,
   handleWindowOpen
 } = require('./tetrioplus/source/electron/electron-main');
 `
-  ).replace(
-    /(new BrowserWindow\()({[\S\s]+?})(\))/,
-    '$1modifyWindowSettings($2)$3'
-  ).replace(
-    /(if \(mainWindow)/g,
-    '$1 && !handleWindowOpen(typeof url !== "undefined" ? url : (typeof arg !== "undefined" ? arg : null))'
-  ).replace(
-    /(mainWindow = win;)/,
-    '$1 onMainWindow(mainWindow);'
-  ).replace(
-    'createWindow();', // TODO: check if still necessary
-    // https://stackoverflow.com/a/53612021
-    'setTimeout(() => createWindow(), 1000);'
-  )
+    ).replace(
+        /(new BrowserWindow\()({[\S\s]+?})(\))/,
+        '$1modifyWindowSettings($2)$3'
+    ).replace(
+        /(if \(mainWindow)/g,
+        '$1 && !handleWindowOpen(typeof url !== "undefined" ? url : (typeof arg !== "undefined" ? arg : null))'
+    ).replace(
+        /(mainWindow = win;)/,
+        '$1 onMainWindow(mainWindow);'
+    ).replace(
+        'createWindow();', // TODO: check if still necessary
+        // https://stackoverflow.com/a/53612021
+        'setTimeout(() => createWindow(), 300);'
+    ).replace(
+        'blockDevtools = true',
+        'blockDevtools = false'
+    )
 );
 
 fs.writeFileSync(
-  'out/preload.js',
-  fs.readFileSync('out/preload.js', 'utf8') +
-  "\nrequire('./tetrioplus/source/electron/preload');"
+    'out/preload.js',
+    fs.readFileSync('out/preload.js', 'utf8') +
+    "\nrequire('./tetrioplus/source/electron/preload');"
 );

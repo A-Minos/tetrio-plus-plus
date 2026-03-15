@@ -1,6 +1,6 @@
 const html = arg => arg.join('');
 export default {
-  template: html`
+    template: html`
     <div :class="{ error: expressionError }">
       <b><slot></slot></b>
       <input
@@ -31,25 +31,25 @@ export default {
       </div>
     </div>
   `,
-  props: ['value', 'optional'],
-  computed: {
-    expressionError() {
-      try {
-        if (this.value.length == 0) {
-          if (this.optional) return null;
-          throw new Error("Expression is required");
+    props: ['value', 'optional'],
+    computed: {
+        expressionError() {
+            try {
+                if (this.value.length == 0) {
+                    if (this.optional) return null;
+                    throw new Error("Expression is required");
+                }
+                let expval = new ExpVal(this.value);
+                let val = expval.evaluate({}, {});
+                return null;
+            } catch (ex) {
+                return ex.toString().replace(/^Error:\s*/, '');
+            }
         }
-        let expval = new ExpVal(this.value);
-        let val = expval.evaluate({}, {});
-        return null;
-      } catch(ex) {
-        return ex.toString().replace(/^Error:\s*/, '');
-      }
+    },
+    methods: {
+        update() {
+            this.$emit('input', this.$refs.input.value);
+        }
     }
-  },
-  methods: {
-    update() {
-      this.$emit('input', this.$refs.input.value);
-    }
-  }
 }

@@ -2,4 +2,5 @@
 
 import './polyfills.js';
 import importer from '../source/importers/import.js';
+
 export default importer;

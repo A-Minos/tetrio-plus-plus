@@ -1,76 +1,76 @@
-import { fetchAtlas } from '../../importers/sfx/decode.js';
+import {fetchAtlas} from '../../importers/sfx/decode.js';
 
 export const events = [
-  'node-end',
-  'time-passed',
-  'repeating-time-passed',
-  'random-target',
-  'parent-node-destroyed',
-  'video-background-seeked',
+    'node-end',
+    'time-passed',
+    'repeating-time-passed',
+    'random-target',
+    'parent-node-destroyed',
+    'video-background-seeked',
 
-  'fx-countdown',
-  'fx-zen-levelup',
-  'fx-master-levelup',
-  'fx-100-players-left',
-  'fx-30-players-left',
-  'fx-10-players-left',
-  'fx-60-seconds-left',
-  'fx-30-seconds-left',
-  'board-gone',
+    'fx-countdown',
+    'fx-zen-levelup',
+    'fx-master-levelup',
+    'fx-100-players-left',
+    'fx-30-players-left',
+    'fx-10-players-left',
+    'fx-60-seconds-left',
+    'fx-30-seconds-left',
+    'board-gone',
 ];
 
 export const fxHasPlayerEnemyVariants = [
-  'board-new',
-  'board-height',
-  'fx-line-clear',
-  'fx-combo',
-  'fx-offense',
-  'fx-defense',
-  'fx-any-spin',
-  'fx-t-spin',
-  'fx-o-spin',
-  'fx-i-spin',
-  'fx-j-spin',
-  'fx-l-spin',
-  'fx-s-spin',
-  'fx-z-spin',
+    'board-new',
+    'board-height',
+    'fx-line-clear',
+    'fx-combo',
+    'fx-offense',
+    'fx-defense',
+    'fx-any-spin',
+    'fx-t-spin',
+    'fx-o-spin',
+    'fx-i-spin',
+    'fx-j-spin',
+    'fx-l-spin',
+    'fx-s-spin',
+    'fx-z-spin',
 ];
 for (let sfx of fxHasPlayerEnemyVariants)
-  events.push(sfx); // -player/-enemy have extra UI
+    events.push(sfx); // -player/-enemy have extra UI
 
 
 [
-  "home",
-  "play1p",
-  "playmulti",
-  "about",
-  "multilisting",
-  "lobby",
-  "victory",
-  "multilog",
-  "endleague",
-  "league",
-  "40l",
-  "blitz",
-  "zen",
-  "custom",
-  "results",
-  "tetra",
-  "tetra_records",
-  "tetra_me",
-  "tetra_players",
-  "config",
-  "config_bgmtweak",
-  "config_account",
-  "config_account_orders",
-  "config_electron"
+    "home",
+    "play1p",
+    "playmulti",
+    "about",
+    "multilisting",
+    "lobby",
+    "victory",
+    "multilog",
+    "endleague",
+    "league",
+    "40l",
+    "blitz",
+    "zen",
+    "custom",
+    "results",
+    "tetra",
+    "tetra_records",
+    "tetra_me",
+    "tetra_players",
+    "config",
+    "config_bgmtweak",
+    "config_account",
+    "config_account_orders",
+    "config_electron"
 ].forEach(evt => {
-  events.push(`menu-${evt}-open`);
-  events.push(`menu-${evt}-close`);
+    events.push(`menu-${evt}-open`);
+    events.push(`menu-${evt}-close`);
 });
 ['forfeit', 'retry', 'replay', 'spectate'].forEach(evt => {
-  events.push(`hud-${evt}-open`);
-  events.push(`hud-${evt}-close`);
+    events.push(`hud-${evt}-open`);
+    events.push(`hud-${evt}-close`);
 });
 
 // run this snippet in the sound effects editor to generate/update this:
@@ -79,77 +79,78 @@ let soundEffects = ["boardappear", "zenith_levelup_b", "combo_2_power", "mission
 
 let div = document.createElement('div');
 try {
-  div.innerHTML = `fetching sfx atlas... <button>skip and use hardcoded sound effects</button>`;
-  document.body.appendChild(div);
-  
-  let controller = new AbortController();
-  div.querySelector('button').addEventListener('click', () => controller.abort());
-  
-  let fetch = await fetchAtlas(controller);
-  
-  soundEffects = Object.keys(fetch).sort((a,b) => {
-    [a,b] = [a,b].map(x => x.replace(/\d+/g, m => m.padStart(4, '0')));
-    let a_c = /^combo_\d+$/.test(a);
-    let a_p = /^combo_\d+_power$/.test(a);
-    let b_c = /^combo_\d+$/.test(b);
-    let b_p = /^combo_\d+_power$/.test(b);
-    if (a_c && b_p) return -1;
-    if (a_p && b_c) return 1;
-    return a > b ? 1 : -1;
-  });
-} catch(ex) {
-  console.warn("failed to fetch sound effects atlas, falling back to hardcoded values", ex);
+    div.innerHTML = `fetching sfx atlas... <button>skip and use hardcoded sound effects</button>`;
+    document.body.appendChild(div);
+
+    let controller = new AbortController();
+    div.querySelector('button').addEventListener('click', () => controller.abort());
+
+    let fetch = await fetchAtlas(controller);
+
+    soundEffects = Object.keys(fetch).sort((a, b) => {
+        [a, b] = [a, b].map(x => x.replace(/\d+/g, m => m.padStart(4, '0')));
+        let a_c = /^combo_\d+$/.test(a);
+        let a_p = /^combo_\d+_power$/.test(a);
+        let b_c = /^combo_\d+$/.test(b);
+        let b_p = /^combo_\d+_power$/.test(b);
+        if (a_c && b_p) return -1;
+        if (a_p && b_c) return 1;
+        return a > b ? 1 : -1;
+    });
+} catch (ex) {
+    console.warn("failed to fetch sound effects atlas, falling back to hardcoded values", ex);
 } finally {
-  div.remove();
+    div.remove();
 }
 for (let sfx of soundEffects)
-  events.push('sfx-' + sfx);
+    events.push('sfx-' + sfx);
 
 // Events that use the 'predicateExpression' field and their labels
 export const eventValueExtendedModes = {
-  'board-height-player': 'Rows high',
-  'board-height-enemy': 'Rows high',
-  'fx-countdown': 'Count',
-  'fx-line-clear-player': 'Lines cleared',
-  'fx-line-clear-enemy': 'Lines cleared',
-  'fx-offense-player': 'Lines sent',
-  'fx-offense-enemy': 'Lines sent',
-  'fx-defense-player': 'Lines blocked',
-  'fx-defense-enemy': 'Lines blocked',
-  'fx-combo-player': 'Combo',
-  'fx-combo-enemy': 'Combo'
+    'board-height-player': 'Rows high',
+    'board-height-enemy': 'Rows high',
+    'fx-countdown': 'Count',
+    'fx-line-clear-player': 'Lines cleared',
+    'fx-line-clear-enemy': 'Lines cleared',
+    'fx-offense-player': 'Lines sent',
+    'fx-offense-enemy': 'Lines sent',
+    'fx-defense-player': 'Lines blocked',
+    'fx-defense-enemy': 'Lines blocked',
+    'fx-combo-player': 'Combo',
+    'fx-combo-enemy': 'Combo'
 }
 
 export const eventHasTarget = {
-  'fork': true,
-  'goto': true,
-  'kill': false,
-  'random': false,
-  'dispatch': false,
-  'create': false,
-  'set': false
+    'fork': true,
+    'goto': true,
+    'kill': false,
+    'random': false,
+    'dispatch': false,
+    'create': false,
+    'set': false
 };
 
 let eventSet = new Set(events);
+
 export function eventType(event) {
-  if (event.startsWith('sfx-')) {
-    let match = /^sfx-(\w+)(?:-(\w+))?/.exec(event);
-    if (match) {
-      let [_, event, scope] = match;
-      if (eventSet.has('sfx-' + event))
-        return { mode: 'sfx', event: 'sfx-' + event, scope: scope || '' };
+    if (event.startsWith('sfx-')) {
+        let match = /^sfx-(\w+)(?:-(\w+))?/.exec(event);
+        if (match) {
+            let [_, event, scope] = match;
+            if (eventSet.has('sfx-' + event))
+                return {mode: 'sfx', event: 'sfx-' + event, scope: scope || ''};
+        }
     }
-  }
 
-  let fx = /^(fx-.+?|board-(?:height|new|gone))(?:-(player|enemy))?$/.exec(event);
-  if (fx && fxHasPlayerEnemyVariants.includes(fx[1])) {
-    let scope = fx[2] || '';
-    if (eventSet.has(fx[1]))
-      return { mode: 'fx', event: fx[1], scope }
-  }
+    let fx = /^(fx-.+?|board-(?:height|new|gone))(?:-(player|enemy))?$/.exec(event);
+    if (fx && fxHasPlayerEnemyVariants.includes(fx[1])) {
+        let scope = fx[2] || '';
+        if (eventSet.has(fx[1]))
+            return {mode: 'fx', event: fx[1], scope}
+    }
 
-  if (!eventSet.has(event))
-    return { mode: 'custom', event: 'CUSTOM' };
+    if (!eventSet.has(event))
+        return {mode: 'custom', event: 'CUSTOM'};
 
-  return { mode: 'normal', event }
+    return {mode: 'normal', event}
 };

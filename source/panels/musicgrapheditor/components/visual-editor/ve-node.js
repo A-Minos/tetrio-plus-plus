@@ -2,7 +2,7 @@ const html = arg => arg.join('');
 import utils from './ve-utils-mixin.js';
 
 export default {
-  template: html`
+    template: html`
     <div style="display: contents">
       <div
         class="node"
@@ -36,14 +36,14 @@ export default {
       </template>
     </div>
   `,
-  props: ['nodes', 'node', 'connected', 'show-anchors'],
-  mixins: [utils],
-  computed: {
-    selected() {
-      return this.isSelected(this.node);
-    },
-    links() {
-      return this.getLinks(this.node, this.node.triggers);
+    props: ['nodes', 'node', 'connected', 'show-anchors'],
+    mixins: [utils],
+    computed: {
+        selected() {
+            return this.isSelected(this.node);
+        },
+        links() {
+            return this.getLinks(this.node, this.node.triggers);
+        }
     }
-  }
 }

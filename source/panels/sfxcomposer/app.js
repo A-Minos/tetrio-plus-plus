@@ -1,8 +1,9 @@
 import importer from '../../importers/import.js';
+
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 const app = new Vue({
-  template: html`
+    template: html`
     <!-- Error screen -->
     <div v-if="error">
       <h1>Error</h1>
@@ -109,240 +110,241 @@ const app = new Vue({
       </fieldset>
     </div>
   `,
-  data: {
-    error: null,
+    data: {
+        error: null,
 
-    loading: true,
+        loading: true,
 
-    decodeStatus: "",
+        decodeStatus: "",
 
-    filenameParseRegex: "^([^.]+)",
+        filenameParseRegex: "^([^.]+)",
 
-    loadedCurrent: false,
+        loadedCurrent: false,
 
-    includeSourceInExportFilenames: false,
+        includeSourceInExportFilenames: false,
 
-    encoding: false,
-    encodeResult: null,
+        encoding: false,
+        encodeResult: null,
 
-    audioContext: null,
+        audioContext: null,
 
-    sprites: [],
-  },
-  async mounted() {
-    this.loading = false;
-    this.audioContext = new AudioContext();
-    this.decode();
-  },
-  computed: {
-    regexError() {
-      try {
-        new RegExp(this.filenameParseRegex)
-        return null;
-      } catch(ex) {
-        return ex.toString();
-      }
+        sprites: [],
     },
-    parsedFilenameParseRegex() {
-      try {
-        return new RegExp(this.filenameParseRegex);
-      } catch(ex) {
-        return null;
-      }
+    async mounted() {
+        this.loading = false;
+        this.audioContext = new AudioContext();
+        this.decode();
+    },
+    computed: {
+        regexError() {
+            try {
+                new RegExp(this.filenameParseRegex)
+                return null;
+            } catch (ex) {
+                return ex.toString();
+            }
+        },
+        parsedFilenameParseRegex() {
+            try {
+                return new RegExp(this.filenameParseRegex);
+            } catch (ex) {
+                return null;
+            }
+        }
+    },
+    methods: {
+        play(sprite) {
+            let source = this.audioContext.createBufferSource();
+            source.connect(this.audioContext.destination);
+            source.buffer = sprite.buffer;
+            source.start();
+        },
+
+        async save() {
+            let message = 'Please confirm that you\'re ready to overwrite your current configuration.';
+            if (!this.loadedCurrent)
+                message += '\n⚠ You have not loaded your current sound effects. This will wipe out any existing configuration you have.';
+            if (!confirm(message)) return;
+            if (!this.sprites.some(sprite => sprite.source == 'modified'))
+                if (!confirm('Are you absolutely sure? No sounds have been modified!'))
+                    return;
+
+
+            this.encodeResult = null;
+            this.encoding = true;
+            await new Promise(res => this.$nextTick(res));
+            this.encodeResult = await importer.sfx.encode(
+                this.sprites,
+                browser.storage.local
+            );
+            this.encoding = false;
+        },
+
+        async replace(evt, sprite) {
+            let file = evt.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            await new Promise(res => {
+                reader.addEventListener('load', res);
+                reader.readAsArrayBuffer(file);
+            });
+
+            sprite.buffer = await importer.sfx.decodeAudio(reader.result);
+            sprite.duration = sprite.buffer.duration;
+            sprite.offset = -1;
+            sprite.source = 'modified';
+
+            console.log("Sprite buffer replaced", sprite.buffer);
+
+            // reset the handler
+            evt.target.type = '';
+            evt.target.type = 'file';
+        },
+
+        async replaceMultiple(evt) {
+            let replaced = [];
+            for (let file of evt.target.files) {
+                let spriteNameMatch = this.parsedFilenameParseRegex.exec(file.name);
+                if (!spriteNameMatch) {
+                    replaced.push(`FAILED: Regex failed to match "${file.name}"`);
+                    continue;
+                }
+
+                let spriteName = spriteNameMatch[1];
+                let sprite = this.sprites.filter(sprite => sprite.name == spriteName)[0];
+                if (!sprite) {
+                    replaced.push(`FAILED: Unknown sound effect ${spriteName}`)
+                    continue;
+                }
+
+                let reader = new FileReader();
+                await new Promise(res => {
+                    reader.addEventListener('load', res);
+                    reader.readAsArrayBuffer(file);
+                });
+
+                let sfxBuffer = await importer.sfx.decodeAudio(reader.result);
+                sprite.buffer = sfxBuffer;
+                sprite.duration = sprite.buffer.duration;
+                sprite.offset = -1;
+                sprite.source = 'modified';
+
+                replaced.push(`Success: ${file.name} -> ${spriteName}`)
+            }
+            alert(replaced.join('\n'));
+            // reset the handler
+            evt.target.type = '';
+            evt.target.type = 'file';
+        },
+
+        async exportZip() {
+            let zip = new JSZip();
+            for (let {name, offset, duration, buffer, source} of this.sprites) {
+                this.decodeStatus = `working on export: encoding ${name}.ogg...`;
+                await new Promise(res => setTimeout(res, 1));
+
+                let encoder = new window.OggVorbisEncoder(buffer.sampleRate, buffer.numberOfChannels, 1.0);
+
+                let channels = [];
+                for (let i = 0; i < buffer.numberOfChannels; i++)
+                    channels.push(buffer.getChannelData(i));
+                encoder.encode(channels);
+
+                let filename = this.includeSourceInExportFilenames
+                    ? `${name}.${source}.ogg`
+                    : `${name}.ogg`;
+                let blob = encoder.finish();
+                zip.file(filename, blob);
+            }
+
+            let source = 'tetrio-plus';
+            if (this.sprites.every(sprite => sprite.source == 'base')) source = 'base-tetrio';
+            if (this.sprites.every(sprite => sprite.source == 'current')) source = 'tetrio-plus-current';
+            if (this.sprites.some(sprite => sprite.source == 'modified')) source = 'tetrio-plus-modified';
+
+            this.decodeStatus = `working on export: generating zipfile...`;
+            let blob = await zip.generateAsync({type: 'blob'});
+
+            let a = document.createElement('a');
+            a.setAttribute('href', URL.createObjectURL(blob));
+            a.setAttribute('download', `${source}-sfx-export.zip`);
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            this.decodeStatus = null;
+        },
+
+        async decompileCurrent() {
+            let {customSoundAtlas, customSounds} = await browser.storage.local.get([
+                'customSoundAtlas', 'customSounds'
+            ]);
+            if (!customSoundAtlas || !customSounds) {
+                alert('No custom sfx configured.');
+                return;
+            }
+            this.decodeStatus = 'Decompiling...';
+
+            let ctx = new window.OfflineAudioContext(2, 44100, 44100);
+            let soundBuffer = await ctx.decodeAudioData(await (await fetch(customSounds)).arrayBuffer());
+
+            for (let [name, [offset, duration]] of Object.entries(customSoundAtlas)) {
+                this.decodeStatus = `Decompiling: slicing ${name}.ogg...`;
+
+                offset /= 1000;
+                duration /= 1000; // Convert milliseconds to seconds
+
+                const ctx = new window.OfflineAudioContext(2, 44100 * duration, 44100);
+
+                let source = ctx.createBufferSource();
+                source.buffer = soundBuffer;
+                source.connect(ctx.destination);
+                source.start(0, offset, duration);
+
+                let sprite = this.sprites.filter(sprite => sprite.name == name)[0];
+                if (!sprite) {
+                    console.warn('failed to find sound effect:', sprite);
+                } else {
+                    sprite.buffer = await ctx.startRendering();
+                    sprite.source = 'current';
+                    sprite.duration = duration;
+                }
+            }
+
+            this.decodeStatus = null;
+            this.loadedCurrent = true;
+        },
+
+        async decode() {
+            try {
+                this.decodeStatus = "Starting";
+
+                // Set sfx enabled flag temporarily, to fetch only the base game content.
+                let {sfxEnabled} = await browser.storage.local.get('sfxEnabled');
+                await browser.storage.local.set({sfxEnabled: false});
+
+                let sprites = await importer.sfx.decodeDefaults(msg => this.decodeStatus = msg);
+                for (let sprite of sprites) {
+                    this.sprites.push({
+                        ...sprite,
+                        source: 'base' // 'current' | 'modified'
+                    });
+                }
+
+                // Reset the sfx enabled flag since we're now done fetching data
+                await browser.storage.local.set({sfxEnabled});
+
+                this.decodeStatus = null;
+                this.decoding = false;
+            } catch (ex) {
+                this.error = ex;
+                console.error(ex);
+            } finally {
+                this.decodeStatus = null;
+            }
+        }
     }
-  },
-  methods: {
-    play(sprite) {
-      let source = this.audioContext.createBufferSource();
-      source.connect(this.audioContext.destination);
-      source.buffer = sprite.buffer;
-      source.start();
-    },
-
-    async save() {
-      let message = 'Please confirm that you\'re ready to overwrite your current configuration.';
-      if (!this.loadedCurrent)
-        message += '\n⚠ You have not loaded your current sound effects. This will wipe out any existing configuration you have.';
-      if (!confirm(message)) return;
-      if (!this.sprites.some(sprite => sprite.source == 'modified'))
-        if (!confirm('Are you absolutely sure? No sounds have been modified!'))
-          return;
-
-
-      this.encodeResult = null;
-      this.encoding = true;
-      await new Promise(res => this.$nextTick(res));
-      this.encodeResult = await importer.sfx.encode(
-        this.sprites,
-        browser.storage.local
-      );
-      this.encoding = false;
-    },
-
-    async replace(evt, sprite) {
-      let file = evt.target.files[0];
-      if (!file) return;
-
-      let reader = new FileReader();
-      await new Promise(res => {
-        reader.addEventListener('load', res);
-        reader.readAsArrayBuffer(file);
-      });
-
-      sprite.buffer = await importer.sfx.decodeAudio(reader.result);
-      sprite.duration = sprite.buffer.duration;
-      sprite.offset = -1;
-      sprite.source = 'modified';
-
-      console.log("Sprite buffer replaced", sprite.buffer);
-
-      // reset the handler
-      evt.target.type = '';
-      evt.target.type = 'file';
-    },
-
-    async replaceMultiple(evt) {
-      let replaced = [];
-      for (let file of evt.target.files) {
-        let spriteNameMatch = this.parsedFilenameParseRegex.exec(file.name);
-        if (!spriteNameMatch) {
-          replaced.push(`FAILED: Regex failed to match "${file.name}"`);
-          continue;
-        }
-
-        let spriteName = spriteNameMatch[1];
-        let sprite = this.sprites.filter(sprite => sprite.name == spriteName)[0];
-        if (!sprite) {
-          replaced.push(`FAILED: Unknown sound effect ${spriteName}`)
-          continue;
-        }
-
-        let reader = new FileReader();
-        await new Promise(res => {
-          reader.addEventListener('load', res);
-          reader.readAsArrayBuffer(file);
-        });
-
-        let sfxBuffer = await importer.sfx.decodeAudio(reader.result);
-        sprite.buffer = sfxBuffer;
-        sprite.duration = sprite.buffer.duration;
-        sprite.offset = -1;
-        sprite.source = 'modified';
-
-        replaced.push(`Success: ${file.name} -> ${spriteName}`)
-      }
-      alert(replaced.join('\n'));
-      // reset the handler
-      evt.target.type = '';
-      evt.target.type = 'file';
-    },
-
-    async exportZip() {
-      let zip = new JSZip();
-      for (let { name, offset, duration, buffer, source } of this.sprites) {
-        this.decodeStatus = `working on export: encoding ${name}.ogg...`;
-        await new Promise(res => setTimeout(res, 1));
-
-        let encoder = new window.OggVorbisEncoder(buffer.sampleRate, buffer.numberOfChannels, 1.0);
-
-        let channels = [];
-        for (let i = 0; i < buffer.numberOfChannels; i++)
-          channels.push(buffer.getChannelData(i));
-        encoder.encode(channels);
-
-        let filename = this.includeSourceInExportFilenames
-          ? `${name}.${source}.ogg`
-          : `${name}.ogg`;
-        let blob = encoder.finish();
-        zip.file(filename, blob);
-      }
-
-      let source = 'tetrio-plus';
-      if (this.sprites.every(sprite => sprite.source == 'base')) source = 'base-tetrio';
-      if (this.sprites.every(sprite => sprite.source == 'current')) source = 'tetrio-plus-current';
-      if (this.sprites.some(sprite => sprite.source == 'modified')) source = 'tetrio-plus-modified';
-
-      this.decodeStatus = `working on export: generating zipfile...`;
-      let blob = await zip.generateAsync({ type: 'blob' });
-
-      let a = document.createElement('a');
-      a.setAttribute('href', URL.createObjectURL(blob));
-      a.setAttribute('download', `${source}-sfx-export.zip`);
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      this.decodeStatus = null;
-    },
-
-    async decompileCurrent() {
-      let { customSoundAtlas, customSounds } = await browser.storage.local.get([
-        'customSoundAtlas', 'customSounds'
-      ]);
-      if (!customSoundAtlas || !customSounds) {
-        alert('No custom sfx configured.');
-        return;
-      }
-      this.decodeStatus = 'Decompiling...';
-
-      let ctx = new window.OfflineAudioContext(2, 44100, 44100);
-      let soundBuffer = await ctx.decodeAudioData(await (await fetch(customSounds)).arrayBuffer());
-
-      for (let [name, [ offset, duration ]] of Object.entries(customSoundAtlas)) {
-        this.decodeStatus = `Decompiling: slicing ${name}.ogg...`;
-
-        offset /= 1000; duration /= 1000; // Convert milliseconds to seconds
-
-        const ctx = new window.OfflineAudioContext(2, 44100*duration, 44100);
-
-        let source = ctx.createBufferSource();
-        source.buffer = soundBuffer;
-        source.connect(ctx.destination);
-        source.start(0, offset, duration);
-
-        let sprite = this.sprites.filter(sprite => sprite.name == name)[0];
-        if (!sprite) {
-          console.warn('failed to find sound effect:', sprite);
-        } else {
-          sprite.buffer = await ctx.startRendering();
-          sprite.source = 'current';
-          sprite.duration = duration;
-        }
-      }
-
-      this.decodeStatus = null;
-      this.loadedCurrent = true;
-    },
-
-    async decode() {
-      try {
-        this.decodeStatus = "Starting";
-
-        // Set sfx enabled flag temporarily, to fetch only the base game content.
-        let { sfxEnabled } = await browser.storage.local.get('sfxEnabled');
-        await browser.storage.local.set({ sfxEnabled: false });
-
-        let sprites = await importer.sfx.decodeDefaults(msg => this.decodeStatus = msg);
-        for (let sprite of sprites) {
-          this.sprites.push({
-            ...sprite,
-            source: 'base' // 'current' | 'modified'
-          });
-        }
-
-        // Reset the sfx enabled flag since we're now done fetching data
-        await browser.storage.local.set({ sfxEnabled });
-
-        this.decodeStatus = null;
-        this.decoding = false;
-      } catch(ex) {
-        this.error = ex;
-        console.error(ex);
-      } finally {
-        this.decodeStatus = null;
-      }
-    }
-  }
 });
 
 window.app = app;

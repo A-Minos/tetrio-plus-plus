@@ -1,8 +1,9 @@
 import OptionToggle from './OptionToggle.js'
+
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
-  template: html`
+    template: html`
     <div>
       <option-toggle inline storageKey="allowURLPackLoader">
         <span :title="(
@@ -31,23 +32,23 @@ export default {
       </option-toggle>
     </div>
   `,
-  components: { OptionToggle },
-  mounted() {
-    browser.storage.local.get('whitelistedLoaderDomains').then(cfg => {
-      this.domains = (cfg.whitelistedLoaderDomains || []).join("\n");
-    });
-  },
-  data: () => ({
-    domains: "",
-    allowSaving: false,
-    editing: false
-  }),
-  methods: {
-    save() {
-      browser.storage.local.set({
-        whitelistedLoaderDomains: this.domains.split("\n")
-      });
-      this.editing = false
+    components: {OptionToggle},
+    mounted() {
+        browser.storage.local.get('whitelistedLoaderDomains').then(cfg => {
+            this.domains = (cfg.whitelistedLoaderDomains || []).join("\n");
+        });
+    },
+    data: () => ({
+        domains: "",
+        allowSaving: false,
+        editing: false
+    }),
+    methods: {
+        save() {
+            browser.storage.local.set({
+                whitelistedLoaderDomains: this.domains.split("\n")
+            });
+            this.editing = false
+        }
     }
-  }
 }

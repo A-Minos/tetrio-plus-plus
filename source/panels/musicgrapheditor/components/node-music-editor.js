@@ -2,13 +2,13 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 
 const music = [];
 const backgrounds = [];
-browser.storage.local.get([ 'music', 'backgrounds' ]).then(res => {
-  if (res.backgrounds) backgrounds.push(...res.backgrounds);
-  if (res.music) music.push(...res.music);
+browser.storage.local.get(['music', 'backgrounds']).then(res => {
+    if (res.backgrounds) backgrounds.push(...res.backgrounds);
+    if (res.music) music.push(...res.music);
 });
 
 export default {
-  template: html`
+    template: html`
     <div class="section" v-if="node.type != 'root'">
       <label for="audio">Select audio:</label>
       <select name="audio" class="node-audio-selector" v-model="node.audio" @change="$emit('change')">
@@ -120,6 +120,6 @@ export default {
       </div>
     </div>
   `,
-  props: ['node'],
-  data: () => ({ music, backgrounds })
+    props: ['node'],
+    data: () => ({music, backgrounds})
 }

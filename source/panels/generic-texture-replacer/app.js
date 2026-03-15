@@ -1,8 +1,9 @@
 const html = arg => arg.join('');
-import { KEYS } from '../../importers/generic-texture.js';
+import {KEYS} from '../../importers/generic-texture.js';
 import OptionToggle from '../../popup/components/OptionToggle.js'
+
 let app = new Vue({
-  template: html`
+    template: html`
     <div>
       <h1>Miscellaneous texture replacer</h1>
 
@@ -63,87 +64,87 @@ let app = new Vue({
       </div>
     </div>
   `,
-  components: { OptionToggle },
-  data: {
-    keys: Object.fromEntries(Object.values(KEYS).map(key => {
-      return [key.storagekey, key.url];
-    })),
-    key: 'board',
-    winterCompatEnabled: false,
-    cacheBuster: `?cache-buster=${Date.now()}`,
-    isSet: false,
-    vanillaSize: ``,
-    moddedSize: ``
-  },
-  async mounted() {
-    await this.reload();
-  },
-  computed: {
-    sizeWarning() {
-      return this.key == 'board' && this.winterCompatEnabled
-        ? this.moddedSize != '1024x1024'
-        : this.moddedSize != this.vanillaSize;
+    components: {OptionToggle},
+    data: {
+        keys: Object.fromEntries(Object.values(KEYS).map(key => {
+            return [key.storagekey, key.url];
+        })),
+        key: 'board',
+        winterCompatEnabled: false,
+        cacheBuster: `?cache-buster=${Date.now()}`,
+        isSet: false,
+        vanillaSize: ``,
+        moddedSize: ``
     },
-    currentSrc() {
-      let prefix = window.browser?.electron
-        ? 'tetrio-plus://tetrio-plus/'
-        : 'https://tetr.io/';
-      let path = this.keys[this.key].slice('https://tetr.io/'.length);
-      return prefix + path + this.cacheBuster;
+    async mounted() {
+        await this.reload();
     },
-    acceptedMime() {
-      return this.key == 'font_hun_fnt' ? '.fnt' : 'image/*';
-    }
-  },
-  watch: {
-    async key() {
-      await this.reload();
-    }
-  },
-  methods: {
-    setWinterCompatEnabled(enabled) {
-      console.log(`set`, enabled);
-      this.winterCompatEnabled = enabled;
+    computed: {
+        sizeWarning() {
+            return this.key == 'board' && this.winterCompatEnabled
+                ? this.moddedSize != '1024x1024'
+                : this.moddedSize != this.vanillaSize;
+        },
+        currentSrc() {
+            let prefix = window.browser?.electron
+                ? 'tetrio-plus://tetrio-plus/'
+                : 'https://tetr.io/';
+            let path = this.keys[this.key].slice('https://tetr.io/'.length);
+            return prefix + path + this.cacheBuster;
+        },
+        acceptedMime() {
+            return this.key == 'font_hun_fnt' ? '.fnt' : 'image/*';
+        }
     },
-    setVanillaSize() {
-      let img = this.$refs.vanilla;
-      this.vanillaSize = `${img.naturalWidth}x${img.naturalHeight}`;
+    watch: {
+        async key() {
+            await this.reload();
+        }
     },
-    setModdedSize() {
-      let img = this.$refs.modded;
-      this.moddedSize = `${img.naturalWidth}x${img.naturalHeight}`;
-    },
-    openWinterCompatWiki() {
-      window.open('https://gitlab.com/UniQMG/tetrio-plus/-/wikis/custom-skins#winter-compat');
-    },
-    async reload() {
-      this.isSet = false;
-      this.cacheBuster = `?cache-buster=${Date.now()}`;
+    methods: {
+        setWinterCompatEnabled(enabled) {
+            console.log(`set`, enabled);
+            this.winterCompatEnabled = enabled;
+        },
+        setVanillaSize() {
+            let img = this.$refs.vanilla;
+            this.vanillaSize = `${img.naturalWidth}x${img.naturalHeight}`;
+        },
+        setModdedSize() {
+            let img = this.$refs.modded;
+            this.moddedSize = `${img.naturalWidth}x${img.naturalHeight}`;
+        },
+        openWinterCompatWiki() {
+            window.open('https://gitlab.com/UniQMG/tetrio-plus/-/wikis/custom-skins#winter-compat');
+        },
+        async reload() {
+            this.isSet = false;
+            this.cacheBuster = `?cache-buster=${Date.now()}`;
 
-      if (!this.key) return false;
-      let val = await browser.storage.local.get(this.key);
-      this.isSet = !!val[this.key];
-    },
-    async set() {
-      let file = this.$refs.file.files[0];
-      if (!file) return;
+            if (!this.key) return false;
+            let val = await browser.storage.local.get(this.key);
+            this.isSet = !!val[this.key];
+        },
+        async set() {
+            let file = this.$refs.file.files[0];
+            if (!file) return;
 
-      let reader = new FileReader();
-      await new Promise(res => {
-        reader.addEventListener('load', res);
-        reader.readAsDataURL(file);
-      });
-      await browser.storage.local.set({ [this.key]: reader.result });
+            let reader = new FileReader();
+            await new Promise(res => {
+                reader.addEventListener('load', res);
+                reader.readAsDataURL(file);
+            });
+            await browser.storage.local.set({[this.key]: reader.result});
 
-      // reset the handler
-      this.$refs.file.type = '';
-      this.$refs.file.type = 'file';
-      await this.reload();
-    },
-    async remove() {
-      await browser.storage.local.remove(this.key);
-      await this.reload();
+            // reset the handler
+            this.$refs.file.type = '';
+            this.$refs.file.type = 'file';
+            await this.reload();
+        },
+        async remove() {
+            await browser.storage.local.remove(this.key);
+            await this.reload();
+        }
     }
-  }
 });
 app.$mount('#app');

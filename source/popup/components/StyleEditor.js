@@ -1,8 +1,9 @@
 import OptionToggle from './OptionToggle.js'
+
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
-  template: html`
+    template: html`
     <div>
       <option-toggle inline storageKey="enableCustomCss">
         <span title="Injects custom CSS into TETR.IO">
@@ -17,22 +18,22 @@ export default {
       </option-toggle>
     </div>
   `,
-  components: { OptionToggle },
-  mounted() {
-    browser.storage.local.get('customCss').then(({ customCss }) => {
-      this.css = customCss ?? '';
-    });
-  },
-  data: () => ({
-    editing: false,
-    css: ""
-  }),
-  methods: {
-    save() {
-      browser.storage.local.set({
-        customCss: this.css
-      });
-      this.editing = false;
+    components: {OptionToggle},
+    mounted() {
+        browser.storage.local.get('customCss').then(({customCss}) => {
+            this.css = customCss ?? '';
+        });
+    },
+    data: () => ({
+        editing: false,
+        css: ""
+    }),
+    methods: {
+        save() {
+            browser.storage.local.set({
+                customCss: this.css
+            });
+            this.editing = false;
+        }
     }
-  }
 }

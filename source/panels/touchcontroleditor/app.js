@@ -1,7 +1,7 @@
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 const app = new Vue({
-  template: html`
+    template: html`
     <div>
       <button @click="save">Save changes</button>
       <span :style="{ opacity: this.saveOpacity }">Saved!</span><br />
@@ -122,9 +122,9 @@ const app = new Vue({
       </div>
     </div>
   `,
-  components: {
-    selector: {
-      template: html`
+    components: {
+        selector: {
+            template: html`
         <select class="touch-bind-select" :class="side" v-model="subvalue">
           <option :value="null">&lt;None&gt;</option>
           <option value="moveLeft">Move left</option>
@@ -142,239 +142,245 @@ const app = new Vue({
           <option value="hide">Hide controls</option>
         </select>
       `,
-      props: ['side', 'value'],
-      data: () => ({ subvalue: true }),
-      watch: {
-        value: { immediate: true, handler(val) { this.subvalue = val; } },
-        subvalue(val) { this.$emit('input', val); }
-      }
-    }
-  },
-  data: {
-    visualizeDeadzone: false,
-    showDeadzoneOnKeys: true,
-    selectedKey: null,
-    saveOpacity: 0,
-    config: {
-      mode: 'touchpad', // touchpad | hybrid | keys
-      deadzone: 100,
-      binding: {
-        L_left: 'moveLeft',
-        L_right: 'moveRight',
-        L_up: 'hardDrop',
-        L_down: 'softDrop',
-        R_left: 'rotateCCW',
-        R_right: 'rotateCW',
-        R_up: 'rotate180',
-        R_down: 'hold'
-      },
-      keys: []
-    },
-    boundingRect: { width: 1, height: 1 }
-  },
-  watch: {
-    'config.mode': function() {
-      this.updateBoundingRect();
-    }
-  },
-  methods: {
-    loadDefault() {
-      if (this.config.keys.length > 0 && !confirm('Clear layout?'))
-        return;
-      this.config.keys = [
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'moveLeft'   },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'moveRight'  },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'hardDrop'   },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'softDrop'   },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'rotateCCW'  },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'rotateCW'   },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'rotate180'  },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'hold'       },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'retry'      },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'exit'       },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'fullscreen' },
-        { x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'enter'      },
-      ];
-    },
-    loadExample() {
-      if (!confirm('Clear layout?'))
-        return;
-      this.config.keys = [
-        { x: 10, y: 75, w: 20, h: 22.5, behavior: "hover", bind: "moveLeft" },
-        { x: 30, y: 75, w: 20, h: 22.5, behavior: "hover", bind: "moveRight" },
-        { x: 20, y: 50, w: 40, h: 20, behavior: "hover", bind: "hardDrop" },
-        { x: 20, y: 90, w: 40, h: 20, behavior: "hover", bind: "softDrop" },
-        { x: 60, y: 90, w: 20, h: 20, behavior: "hover", bind: "rotateCCW" },
-        { x: 90, y: 90, w: 20, h: 20, behavior: "hover", bind: "rotateCW" },
-        { x: 75, y: 70, w: 20, h: 20, behavior: "hover", bind: "rotate180" },
-        { x: 90, y: 45, w: 20, h: 20, behavior: "hover", bind: "hold" },
-        { x: 50, y: 10, w: 20, h: 20, behavior: "hover", bind: "exit" },
-        { x: 70, y: 10, w: 20, h: 20, behavior: "hover", bind: "retry" },
-        { x: 90, y: 10, w: 20, h: 20, behavior: "hover", bind: "fullscreen" },
-      ];
-    },
-    toPercent({ x, y, w, h }) {
-      let { width, height } = this.boundingRect;
-      return {
-        x: (x + w/2) / width * 100,
-        y: (y + h/2) / height * 100,
-        w: w / width * 100,
-        h: h / height * 100
-      }
-    },
-    toPixels({ x, y, w, h }) {
-      let { width, height } = this.boundingRect;
-      w = w / 100 * width;
-      h = h / 100 * height;
-      x = (x/100 * width) - w/2;
-      y = (y/100 * height) - h/2;
-      return { x, y, w, h };
-    },
-    keyStyle(key) {
-      let { x, y, w, h } = this.toPixels(key);
-      return {
-        '--x': x + 'px',
-        '--y': y + 'px',
-        '--width': w + 'px',
-        '--height': h + 'px',
-      }
-    },
-    updateBoundingRect() {
-      Vue.nextTick(() => {
-        if (!this.$refs.keyContainer) return;
-        let { width, height } = this.$refs.keyContainer.getBoundingClientRect();
-        this.boundingRect.width = width;
-        this.boundingRect.height = height;
-      });
-    },
-    addKey() {
-      this.config.keys.splice(0, 0, {
-        x: 50,
-        y: 50,
-        w: 20,
-        h: 20,
-        behavior: 'hover', // hover | tap
-        bind: 'hardDrop'
-      })
-    },
-    deleteKey(key) {
-      let index = this.config.keys.indexOf(key);
-      this.config.keys.splice(index, 1);
-      if (key == this.selectedKey)
-        this.selectedKey = null;
-    },
-    moveTop(key) {
-      let index = this.config.keys.indexOf(key);
-      this.config.keys.splice(index, 1);
-      this.config.keys.push(key);
-    },
-    moveBottom(key) {
-      let index = this.config.keys.indexOf(key);
-      this.config.keys.splice(index, 1);
-      this.config.keys.splice(0, 0, key);
-    },
-    save() {
-      browser.storage.local.set({
-        touchControlConfig: JSON.stringify(this.config)
-      });
-      this.saveOpacity = 1.25;
-      let timeout = setInterval(() => {
-        this.saveOpacity -= 0.1;
-        if (this.saveOpacity <= 0)
-          clearTimeout(timeout);
-      }, 50);
-    }
-  },
-  async mounted() {
-    let configObj = await browser.storage.local.get('touchControlConfig');
-    let config = configObj.touchControlConfig;
-    if (config) this.config = JSON.parse(config);
-
-    this.updateBoundingRect();
-    window.addEventListener('resize', () => {
-      this.updateBoundingRect();
-      console.log("resize");
-    });
-
-    window.addEventListener('keyup', event => {
-      if (!this.selectedKey) return;
-
-      switch (event.key) {
-        case 'Delete':
-          this.deleteKey(this.selectedKey);
-          break;
-
-        case 't':
-          this.moveTop(this.selectedKey);
-          break;
-
-        case 'b':
-          this.moveBottom(this.selectedKey);
-          break;
-      }
-    });
-
-    let that = this;
-    interact('.key')
-      .resizable({
-        edges: { left: true, right: true, bottom: true, top: true },
-        modifiers: [
-          // keep the edges inside the parent
-          interact.modifiers.restrictEdges({
-            outer: 'parent'
-          }),
-
-          // minimum size
-          interact.modifiers.restrictSize({
-            min: { width: 50, height: 50 }
-          })
-        ],
-        listeners: {
-          move: (event) => {
-            let index = event.target.getAttribute('index');
-            let key = this.config.keys[index];
-            this.selectedKey = key;
-
-            let { x, y, w, h } = this.toPixels(key);
-            x += event.deltaRect.left;
-            y += event.deltaRect.top;
-            w = event.rect.width;
-            h = event.rect.height;
-            Object.assign(key, this.toPercent({ x, y, w, h }));
-          }
+            props: ['side', 'value'],
+            data: () => ({subvalue: true}),
+            watch: {
+                value: {
+                    immediate: true, handler(val) {
+                        this.subvalue = val;
+                    }
+                },
+                subvalue(val) {
+                    this.$emit('input', val);
+                }
+            }
         }
-      })
-      .draggable({
-        listeners: {
-          move: (event) => {
-            let index = event.target.getAttribute('index');
-            let key = this.config.keys[index];
-            this.selectedKey = key;
-
-            let { x, y, w, h } = this.toPixels(key);
-            y += event.dy;
-            x += event.dx;
-            Object.assign(key, this.toPercent({ x, y, w, h }));
-          }
+    },
+    data: {
+        visualizeDeadzone: false,
+        showDeadzoneOnKeys: true,
+        selectedKey: null,
+        saveOpacity: 0,
+        config: {
+            mode: 'touchpad', // touchpad | hybrid | keys
+            deadzone: 100,
+            binding: {
+                L_left: 'moveLeft',
+                L_right: 'moveRight',
+                L_up: 'hardDrop',
+                L_down: 'softDrop',
+                R_left: 'rotateCCW',
+                R_right: 'rotateCW',
+                R_up: 'rotate180',
+                R_down: 'hold'
+            },
+            keys: []
         },
-        modifiers: [
-          interact.modifiers.restrictRect({
-            restriction: 'parent'
-          })
-        ]
-      })
-      .on('tap', event => {
-        let index = event.target.getAttribute('index');
-        this.selectedKey = this.config.keys[index];
-      });
-  },
-  computed: {
-    touchPreviewStyle() {
-      return {
-        '--deadzone': (this.visualizeDeadzone ? this.config.deadzone : 100) + 'px'
-      }
+        boundingRect: {width: 1, height: 1}
+    },
+    watch: {
+        'config.mode': function () {
+            this.updateBoundingRect();
+        }
+    },
+    methods: {
+        loadDefault() {
+            if (this.config.keys.length > 0 && !confirm('Clear layout?'))
+                return;
+            this.config.keys = [
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'moveLeft'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'moveRight'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'hardDrop'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'softDrop'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'rotateCCW'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'rotateCW'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'rotate180'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'hold'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'retry'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'exit'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'fullscreen'},
+                {x: 50, y: 50, w: 20, h: 20, behavior: 'hover', bind: 'enter'},
+            ];
+        },
+        loadExample() {
+            if (!confirm('Clear layout?'))
+                return;
+            this.config.keys = [
+                {x: 10, y: 75, w: 20, h: 22.5, behavior: "hover", bind: "moveLeft"},
+                {x: 30, y: 75, w: 20, h: 22.5, behavior: "hover", bind: "moveRight"},
+                {x: 20, y: 50, w: 40, h: 20, behavior: "hover", bind: "hardDrop"},
+                {x: 20, y: 90, w: 40, h: 20, behavior: "hover", bind: "softDrop"},
+                {x: 60, y: 90, w: 20, h: 20, behavior: "hover", bind: "rotateCCW"},
+                {x: 90, y: 90, w: 20, h: 20, behavior: "hover", bind: "rotateCW"},
+                {x: 75, y: 70, w: 20, h: 20, behavior: "hover", bind: "rotate180"},
+                {x: 90, y: 45, w: 20, h: 20, behavior: "hover", bind: "hold"},
+                {x: 50, y: 10, w: 20, h: 20, behavior: "hover", bind: "exit"},
+                {x: 70, y: 10, w: 20, h: 20, behavior: "hover", bind: "retry"},
+                {x: 90, y: 10, w: 20, h: 20, behavior: "hover", bind: "fullscreen"},
+            ];
+        },
+        toPercent({x, y, w, h}) {
+            let {width, height} = this.boundingRect;
+            return {
+                x: (x + w / 2) / width * 100,
+                y: (y + h / 2) / height * 100,
+                w: w / width * 100,
+                h: h / height * 100
+            }
+        },
+        toPixels({x, y, w, h}) {
+            let {width, height} = this.boundingRect;
+            w = w / 100 * width;
+            h = h / 100 * height;
+            x = (x / 100 * width) - w / 2;
+            y = (y / 100 * height) - h / 2;
+            return {x, y, w, h};
+        },
+        keyStyle(key) {
+            let {x, y, w, h} = this.toPixels(key);
+            return {
+                '--x': x + 'px',
+                '--y': y + 'px',
+                '--width': w + 'px',
+                '--height': h + 'px',
+            }
+        },
+        updateBoundingRect() {
+            Vue.nextTick(() => {
+                if (!this.$refs.keyContainer) return;
+                let {width, height} = this.$refs.keyContainer.getBoundingClientRect();
+                this.boundingRect.width = width;
+                this.boundingRect.height = height;
+            });
+        },
+        addKey() {
+            this.config.keys.splice(0, 0, {
+                x: 50,
+                y: 50,
+                w: 20,
+                h: 20,
+                behavior: 'hover', // hover | tap
+                bind: 'hardDrop'
+            })
+        },
+        deleteKey(key) {
+            let index = this.config.keys.indexOf(key);
+            this.config.keys.splice(index, 1);
+            if (key == this.selectedKey)
+                this.selectedKey = null;
+        },
+        moveTop(key) {
+            let index = this.config.keys.indexOf(key);
+            this.config.keys.splice(index, 1);
+            this.config.keys.push(key);
+        },
+        moveBottom(key) {
+            let index = this.config.keys.indexOf(key);
+            this.config.keys.splice(index, 1);
+            this.config.keys.splice(0, 0, key);
+        },
+        save() {
+            browser.storage.local.set({
+                touchControlConfig: JSON.stringify(this.config)
+            });
+            this.saveOpacity = 1.25;
+            let timeout = setInterval(() => {
+                this.saveOpacity -= 0.1;
+                if (this.saveOpacity <= 0)
+                    clearTimeout(timeout);
+            }, 50);
+        }
+    },
+    async mounted() {
+        let configObj = await browser.storage.local.get('touchControlConfig');
+        let config = configObj.touchControlConfig;
+        if (config) this.config = JSON.parse(config);
+
+        this.updateBoundingRect();
+        window.addEventListener('resize', () => {
+            this.updateBoundingRect();
+            console.log("resize");
+        });
+
+        window.addEventListener('keyup', event => {
+            if (!this.selectedKey) return;
+
+            switch (event.key) {
+                case 'Delete':
+                    this.deleteKey(this.selectedKey);
+                    break;
+
+                case 't':
+                    this.moveTop(this.selectedKey);
+                    break;
+
+                case 'b':
+                    this.moveBottom(this.selectedKey);
+                    break;
+            }
+        });
+
+        let that = this;
+        interact('.key')
+            .resizable({
+                edges: {left: true, right: true, bottom: true, top: true},
+                modifiers: [
+                    // keep the edges inside the parent
+                    interact.modifiers.restrictEdges({
+                        outer: 'parent'
+                    }),
+
+                    // minimum size
+                    interact.modifiers.restrictSize({
+                        min: {width: 50, height: 50}
+                    })
+                ],
+                listeners: {
+                    move: (event) => {
+                        let index = event.target.getAttribute('index');
+                        let key = this.config.keys[index];
+                        this.selectedKey = key;
+
+                        let {x, y, w, h} = this.toPixels(key);
+                        x += event.deltaRect.left;
+                        y += event.deltaRect.top;
+                        w = event.rect.width;
+                        h = event.rect.height;
+                        Object.assign(key, this.toPercent({x, y, w, h}));
+                    }
+                }
+            })
+            .draggable({
+                listeners: {
+                    move: (event) => {
+                        let index = event.target.getAttribute('index');
+                        let key = this.config.keys[index];
+                        this.selectedKey = key;
+
+                        let {x, y, w, h} = this.toPixels(key);
+                        y += event.dy;
+                        x += event.dx;
+                        Object.assign(key, this.toPercent({x, y, w, h}));
+                    }
+                },
+                modifiers: [
+                    interact.modifiers.restrictRect({
+                        restriction: 'parent'
+                    })
+                ]
+            })
+            .on('tap', event => {
+                let index = event.target.getAttribute('index');
+                this.selectedKey = this.config.keys[index];
+            });
+    },
+    computed: {
+        touchPreviewStyle() {
+            return {
+                '--deadzone': (this.visualizeDeadzone ? this.config.deadzone : 100) + 'px'
+            }
+        }
     }
-  }
 });
 
 app.$mount('#app');

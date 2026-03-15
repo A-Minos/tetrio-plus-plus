@@ -2,7 +2,7 @@ const html = arg => arg.join('');
 import utils from './ve-utils-mixin.js';
 
 export default {
-  template: html`
+    template: html`
     <g>
       <template v-for="link of links">
         <line
@@ -34,32 +34,32 @@ export default {
       </template>
     </g>
   `,
-  props: ['nodes', 'node', 'events', 'draw-thick', 'show-labels'],
-  mixins: [utils],
-  methods: {
-    age(index) {
-      let minAge = 1;
-      let success = false;
-      for (let evt of this.events) {
-        if (evt.trigger != index) continue;
-        let newAge = evt.age / evt.maxAge;
-        if (newAge < minAge) {
-          minAge = newAge;
-          success = evt.success;
+    props: ['nodes', 'node', 'events', 'draw-thick', 'show-labels'],
+    mixins: [utils],
+    methods: {
+        age(index) {
+            let minAge = 1;
+            let success = false;
+            for (let evt of this.events) {
+                if (evt.trigger != index) continue;
+                let newAge = evt.age / evt.maxAge;
+                if (newAge < minAge) {
+                    minAge = newAge;
+                    success = evt.success;
+                }
+                minAge = Math.min(minAge, evt.age / evt.maxAge);
+            }
+            let linear = 1 - Math.max(Math.min(minAge, 1), 0);
+            return {age: 1 - Math.pow(1 - linear, 3), success: success};
+        },
+        color(index) {
+            let {age, success} = this.age(index);
+            return `rgb(${age * 0xFF}, ${success ? age * 0xA5 : 0}, 0)`;
         }
-        minAge = Math.min(minAge, evt.age / evt.maxAge);
-      }
-      let linear = 1 - Math.max(Math.min(minAge, 1), 0);
-      return { age: 1 - Math.pow(1 - linear, 3), success: success };
     },
-    color(index) {
-      let { age, success } = this.age(index);
-      return `rgb(${age * 0xFF}, ${success ? age * 0xA5 : 0}, 0)`;
+    computed: {
+        links() {
+            return this.getLinks(this.node, this.node.triggers);
+        }
     }
-  },
-  computed: {
-    links() {
-      return this.getLinks(this.node, this.node.triggers);
-    }
-  }
 }

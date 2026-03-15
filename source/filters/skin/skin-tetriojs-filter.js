@@ -1,61 +1,62 @@
 async function getRequiredResolution(storage) {
-  let res = await storage.get([
-    'skin', 'ghost', 'advancedSkinLoading', 'skinAnimMeta', 'ghostAnimMeta'
-  ]);
-  if (res.advancedSkinLoading && (res.skinAnimMeta || res.ghostAnimMeta))
-    return 'hd';
-  if (res.skin || res.ghost)
-    return 'uhd';
-  return null;
+    let res = await storage.get([
+        'skin', 'ghost', 'advancedSkinLoading', 'skinAnimMeta', 'ghostAnimMeta'
+    ]);
+    if (res.advancedSkinLoading && (res.skinAnimMeta || res.ghostAnimMeta))
+        return 'hd';
+    if (res.skin || res.ghost)
+        return 'uhd';
+    return null;
 }
+
 createRewriteFilter("UHD/HD forcer", "https://tetr.io/js/tetrio.js*", {
-  enabledFor: async (storage, request) => {
-    return await getRequiredResolution(storage) != null;
-  },
-  onStop: async (storage, url, src, callback) => {
-    let res = await getRequiredResolution(storage);
-    let newSrc = src.replace(/["']uhd["']\s*:\s*["']hd["']/, `'${res}':'${res}'`)
-    if (newSrc == src) console.warn('UHD Disabler hook broke (1/1)');
-    callback({ type: 'text/javascript', data: newSrc, encoding: 'text' });
-  }
+    enabledFor: async (storage, request) => {
+        return await getRequiredResolution(storage) != null;
+    },
+    onStop: async (storage, url, src, callback) => {
+        let res = await getRequiredResolution(storage);
+        let newSrc = src.replace(/["']uhd["']\s*:\s*["']hd["']/, `'${res}':'${res}'`)
+        if (newSrc == src) console.warn('UHD Disabler hook broke (1/1)');
+        callback({type: 'text/javascript', data: newSrc, encoding: 'text'});
+    }
 });
 
 createRewriteFilter("Scale mode forcer", "https://tetr.io/js/tetrio.js*", {
-  enabledFor: async (storage, request) => {
-    let res = await storage.get('forceNearestScaling');
-    return res.forceNearestScaling;
-  },
-  onStop: async (storage, url, src, callback) => {
-    let newSrc = src.replace(
-      /(\w{1,5}\s*=\s*new\s*(\w+)\.Application\({)/g,
-      `$1__:void (() => { $2.settings.SCALE_MODE=$2.SCALE_MODES.NEAREST; })(),`
-    );
-    if (newSrc == src) console.warn('Scale mode forcer hook broke (1/1)');
-    callback({ type: 'text/javascript', data: newSrc, encoding: 'text' });
-  }
+    enabledFor: async (storage, request) => {
+        let res = await storage.get('forceNearestScaling');
+        return res.forceNearestScaling;
+    },
+    onStop: async (storage, url, src, callback) => {
+        let newSrc = src.replace(
+            /(\w{1,5}\s*=\s*new\s*(\w+)\.Application\({)/g,
+            `$1__:void (() => { $2.settings.SCALE_MODE=$2.SCALE_MODES.NEAREST; })(),`
+        );
+        if (newSrc == src) console.warn('Scale mode forcer hook broke (1/1)');
+        callback({type: 'text/javascript', data: newSrc, encoding: 'text'});
+    }
 });
 
 createRewriteFilter("Advanced skin loader", "https://tetr.io/js/tetrio.js*", {
-  enabledFor: async (storage, request) => {
-    let res = await storage.get([
-      'advancedSkinLoading',
-      'skinAnimMeta',
-      'ghostAnimMeta'
-    ]);
-    return res.advancedSkinLoading && (res.skinAnimMeta || res.ghostAnimMeta);
-  },
-  onStop: async (storage, url, src, callback) => {
-    try {
-      const res = await storage.get(['skinAnimMeta', 'ghostAnimMeta']);
-      console.log('res', res);
+    enabledFor: async (storage, request) => {
+        let res = await storage.get([
+            'advancedSkinLoading',
+            'skinAnimMeta',
+            'ghostAnimMeta'
+        ]);
+        return res.advancedSkinLoading && (res.skinAnimMeta || res.ghostAnimMeta);
+    },
+    onStop: async (storage, url, src, callback) => {
+        try {
+            const res = await storage.get(['skinAnimMeta', 'ghostAnimMeta']);
+            console.log('res', res);
 
-      // Load animated spritesheet
-      src = src.replace(
-        /(\/res\/skins\/(minos|ghost)\/connected.png)/g,
-        "$1?animated"
-      );
+            // Load animated spritesheet
+            src = src.replace(
+                /(\/res\/skins\/(minos|ghost)\/connected.png)/g,
+                "$1?animated"
+            );
 
-      src = `
+            src = `
         // one time init to read control events from the music graph
         window.__tetrioPlusAdvSkinLoader = { manualControl: false, frame: 0 };
         document.addEventListener('tetrio-plus-set-skin-manual-control', evt => {
@@ -66,17 +67,17 @@ createRewriteFilter("Advanced skin loader", "https://tetr.io/js/tetrio.js*", {
         });
       ` + src;
 
-      // Set up animated textures
-      var rgx = /(\w+\((\w+),\s*(\w+),\s*(\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*{[\S\s]{0,200}Object\.keys\(\3\)\.forEach\(\(\w\s*=>\s*{)([\S\s]+?)}/
-      var match = false;
-      src = src.replace(rgx, ($, pre, a1, a2, a3, a4, a5, a6, loopBody) => {
-        var rgx2 = /(\w+\[\w+\])\s*=\s*new\s*(\w+)\.Texture\((\w+),\s*new\s*\w+.Rectangle\(([^,]+),([^,]+),([^,]+),([^,]+)\)\)/;
-        let res2 = rgx2.exec(loopBody);
-        if (!res2) return;
-        let [$2, target, pixiArg, baseTexArg, rectArg1, rectArg2, rectArg3, rectArg4] = res2;
-        loopBody = (`
-          let { frames, delay } = ${b64Recode(res.skinAnimMeta || { frames: 0, delay: 1 })};
-          let { frames: gframes, delay: gdelay } = ${b64Recode(res.ghostAnimMeta || { frames: 0, delay: 1 })};
+            // Set up animated textures
+            var rgx = /(\w+\((\w+),\s*(\w+),\s*(\w+),\s*(\w+),\s*(\w+),\s*(\w+)\)\s*{[\S\s]{0,200}Object\.keys\(\3\)\.forEach\(\(\w\s*=>\s*{)([\S\s]+?)}/
+            var match = false;
+            src = src.replace(rgx, ($, pre, a1, a2, a3, a4, a5, a6, loopBody) => {
+                var rgx2 = /(\w+\[\w+\])\s*=\s*new\s*(\w+)\.Texture\((\w+),\s*new\s*\w+.Rectangle\(([^,]+),([^,]+),([^,]+),([^,]+)\)\)/;
+                let res2 = rgx2.exec(loopBody);
+                if (!res2) return;
+                let [$2, target, pixiArg, baseTexArg, rectArg1, rectArg2, rectArg3, rectArg4] = res2;
+                loopBody = (`
+          let { frames, delay } = ${b64Recode(res.skinAnimMeta || {frames: 0, delay: 1})};
+          let { frames: gframes, delay: gdelay } = ${b64Recode(res.ghostAnimMeta || {frames: 0, delay: 1})};
 
           let first = new ${pixiArg}.Texture(
             ${baseTexArg},
@@ -116,20 +117,20 @@ createRewriteFilter("Advanced skin loader", "https://tetr.io/js/tetrio.js*", {
 
           ${target} = first;
         `);
-        match = true;
-        return pre + loopBody + '}';
-      });
-      if (!match) {
-        console.warn('Advanced skin loader hooks broke (1/?)');
-        return;
-      }
+                match = true;
+                return pre + loopBody + '}';
+            });
+            if (!match) {
+                console.warn('Advanced skin loader hooks broke (1/?)');
+                return;
+            }
 
-      // Replace sprites with animated sprites
-      var rgx = /(wang24[\S\s]{0,50}(.)\s*=\s*\w+\.assets\[.+?\].textures[\S\s]{0,50})new (\w+).Sprite\(\2\)/g;
-      var match = 0;
-      src = src.replace(rgx, ($, pre, texVar, pixiVar) => {
-        match += 1;
-        return pre + (`
+            // Replace sprites with animated sprites
+            var rgx = /(wang24[\S\s]{0,50}(.)\s*=\s*\w+\.assets\[.+?\].textures[\S\s]{0,50})new (\w+).Sprite\(\2\)/g;
+            var match = 0;
+            src = src.replace(rgx, ($, pre, texVar, pixiVar) => {
+                match += 1;
+                return pre + (`
           (() => {
             let { frames, delay } = ${b64Recode(res.skinAnimMeta || {})};
             let { frames: gframes, delay: gdelay } = ${b64Recode(res.ghostAnimMeta || {})};
@@ -160,18 +161,18 @@ createRewriteFilter("Advanced skin loader", "https://tetr.io/js/tetrio.js*", {
             return sprite;
           })()
         `);
-      });
-      if (match != 2) {
-        console.warn('Advanced skin loader hooks broke (2/?)');
-        return;
-      }
+            });
+            if (match != 2) {
+                console.warn('Advanced skin loader hooks broke (2/?)');
+                return;
+            }
 
-    } finally {
-      callback({
-        type: 'text/javascript',
-        data: src,
-        encoding: 'text'
-      });
+        } finally {
+            callback({
+                type: 'text/javascript',
+                data: src,
+                encoding: 'text'
+            });
+        }
     }
-  }
 })

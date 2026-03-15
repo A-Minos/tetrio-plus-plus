@@ -1,7 +1,7 @@
 const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
-  template: html`
+    template: html`
     <table class="music-table custom-music">
       <tr>
         <th class="song-name">name</th>
@@ -69,5 +69,5 @@ export default {
       </tr>
     </table>
   `,
-  props: ['music', 'builtin']
+    props: ['music', 'builtin']
 }

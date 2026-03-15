@@ -1,3 +1,3 @@
 browser.runtime.onInstalled.addListener(evt => {
-  migrate(browser.storage.local);
+    migrate(browser.storage.local);
 })
