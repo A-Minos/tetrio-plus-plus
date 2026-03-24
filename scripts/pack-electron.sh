@@ -40,6 +40,7 @@ cd ..
 
 # note: bit of a hack, assumes we're being called from build.sh after doing the tpsecore build
 cp source/lib/tpsecore.wasm out/tetrioplus/source/lib
+cp source/tetrio-plus-plus-customize out/tetrioplus/source
 
 # cleanup
 rm 'TETR.IO Setup.tar.gz' app.asar
