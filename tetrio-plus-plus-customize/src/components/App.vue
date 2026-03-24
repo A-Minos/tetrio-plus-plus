@@ -2,7 +2,7 @@
 import {darkTheme} from "naive-ui";
 import plugins from "@/plugins";
 import {type Ref, ref, watch} from "vue";
-import {isEmptyish} from "remeda";
+import {isEmptyish, isNullish} from "remeda";
 import {generatePluginStateStorageKey} from "@/utils/plugin";
 import {computedAsync} from "@vueuse/core";
 import hljs from 'highlight.js/lib/core'
@@ -16,14 +16,21 @@ hljs.registerLanguage('javascript', javascript)
 const mappedPlugins = computedAsync(async () => {
     return Promise.all(
         plugins.map(async plugin => {
-            const storageKey = generatePluginStateStorageKey(plugin.id)
-            const state = ref<boolean>(await browser.storage.local.get(storageKey).then(data => !!data[storageKey]) ?? false)
+            let state: Ref<boolean | null>
 
-            watch(state, newState => {
-                browser.storage.local.set({
-                    [storageKey]: newState
+            try {
+                const storageKey = generatePluginStateStorageKey(plugin.id)
+                state = ref<boolean>(await browser.storage.local.get(storageKey).then(data => !!data[storageKey]) ?? false)
+
+                watch(state, newState => {
+                    browser.storage.local.set({
+                        [storageKey]: newState
+                    })
                 })
-            })
+            } catch (e) {
+                console.error(e)
+                state = ref<null>(null)
+            }
 
             return {
                 ...plugin,
@@ -31,7 +38,7 @@ const mappedPlugins = computedAsync(async () => {
                 state
             } satisfies Plugin & {
                 show_code: Ref<boolean>
-                state: Ref<boolean>
+                state: Ref<boolean | null>
             }
         })
     )
@@ -55,16 +62,18 @@ const mappedPlugins = computedAsync(async () => {
                         <n-list-item v-for="plugin in mappedPlugins" :key="plugin.id">
                             <n-thing>
                                 <template #header>
-                                    <n-text>{{ plugin.name }}</n-text>
-                                    <n-text :depth="3" class="plugin_information_divider">By</n-text>
-                                    <n-text>{{ plugin.author }}</n-text>
-                                    <n-text :depth="3" class="plugin_information_divider">@</n-text>
-                                    <n-text> {{ plugin.version }}</n-text>
+                                    <n-flex align="center" class="!gap-1">
+                                        <n-text>{{ plugin.name }}</n-text>
+                                        <n-text :depth="3" class="plugin_information_divider">By</n-text>
+                                        <n-text>{{ plugin.author }}</n-text>
+                                        <n-text :depth="3" class="plugin_information_divider">@</n-text>
+                                        <n-text> {{ plugin.version }}</n-text>
+                                    </n-flex>
                                 </template>
 
                                 <template #description>{{ plugin.description }}</template>
 
-                                <n-switch v-model:value="plugin.state.value"/>
+                                <n-switch v-model:value="plugin.state.value" :disabled="isNullish(plugin.state.value)"/>
                             </n-thing>
 
                             <n-drawer v-model:show="plugin.show_code.value" placement="left" width="50%">
@@ -77,11 +86,13 @@ const mappedPlugins = computedAsync(async () => {
 
                                         <n-card v-if="!isEmptyish(plugin.script)" class="plugin_code" size="small"
                                                 title="脚本">
-                                            <n-code :code="plugin.script.toString()" language="JavaScript" show-line-numbers
+                                            <n-code :code="plugin.script.toString()" language="JavaScript"
+                                                    show-line-numbers
                                                     word-wrap/>
                                         </n-card>
 
-                                        <n-card v-if="!isEmptyish(plugin.background_script)" class="plugin_code" size="small"
+                                        <n-card v-if="!isEmptyish(plugin.background_script)" class="plugin_code"
+                                                size="small"
                                                 title="后台脚本">
                                             <n-code :code="plugin.background_script.toString()" language="JavaScript"
                                                     show-line-numbers word-wrap/>
