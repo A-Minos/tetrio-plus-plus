@@ -16,7 +16,7 @@ jobs:
       - run: |
           cd tetrio-plus-plus-customize
           bun install
-          bun build
+          bun run build
           cd ..
 
       - run: ./scripts/build.sh
