@@ -43,7 +43,7 @@ node -v
 npm i -g yarn
 
 # build it
-git checkout $CI_COMMIT_REF_NAME -f && git pull && git reset --hard $CI_COMMIT_SHA
+# git checkout $CI_COMMIT_REF_NAME -f && git pull && git reset --hard $CI_COMMIT_SHA
 echo Building version v`grep -oP "(?<=version\": \")[^\"]+(?=\")" < manifest.json`
 ls -a
 yarn --ignore-engines
