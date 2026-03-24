@@ -13,100 +13,101 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 
 const app = new Vue({
     template: html`
-    <div id="app">
-      <h1>
-        TETR.IO PLUS
-        <span class="version">
+        <div id="app">
+            <h1>
+                TETR.IO PLUS
+                <span class="version">
           v{{version}}<span v-if="commit" style="margin-left: 3px">({{ commit }})</span> | <a
-            class="wiki"
-            href="https://gitlab.com/UniQMG/tetrio-plus/wikis"
-            @click="openSource($event)"
-          >Wiki</a>
+                        class="wiki"
+                        href="https://gitlab.com/UniQMG/tetrio-plus/wikis"
+                        @click="openSource($event)"
+                >Wiki</a>
           <span v-if="debugMode">| Developer mode</span>
         </span>
-      </h1>
-      <p class="tagline">Unofficial TETR.IO Customization Tool</p>
+            </h1>
+            <p class="tagline">Unofficial TETR.IO Customization Tool</p>
 
-      <fieldset class="section" v-if="isMobileExtensionPopup">
-        <legend>Firefox mobile</legend>
-        TETR.IO PLUS is currently runing on Firefox mobile in the extension popup.<br>
-        All menu-opening buttons will open background tabs.<br>
-        <button @click="openInNewTab()">Open this menu as a regular tab</button> instead to avoid this.
-      </fieldset>
+            <fieldset class="section" v-if="isMobileExtensionPopup">
+                <legend>Firefox mobile</legend>
+                TETR.IO PLUS is currently runing on Firefox mobile in the extension popup.<br>
+                All menu-opening buttons will open background tabs.<br>
+                <button @click="openInNewTab()">Open this menu as a regular tab</button>
+                instead to avoid this.
+            </fieldset>
 
-      <option-toggle storageKey="tetrioPlusEnabled" mode="hide">
-        <fieldset class="section">
-          <legend>TETR.IO PLUS disabled</legend>
-          TETR.IO PLUS is disabled.<br>
-          Enable it in the 'management' section below.
-        </fieldset>
-      </option-toggle>
+            <option-toggle storageKey="tetrioPlusEnabled" mode="hide">
+                <fieldset class="section">
+                    <legend>TETR.IO PLUS disabled</legend>
+                    TETR.IO PLUS is disabled.<br>
+                    Enable it in the 'management' section below.
+                </fieldset>
+            </option-toggle>
 
-      <!-- Update check result -->
-      <template v-if="updateHref">
-        <a href="#" @click.prevent="openInBrowser(updateHref)">
-          {{ updateStatus }}
-        </a>
-      </template>
-      <template v-else>{{ updateStatus }}</template>
+            <!-- Update check result -->
+            <template v-if="updateHref">
+                <a href="#" @click.prevent="openInBrowser(updateHref)">
+                    {{ updateStatus }}
+                </a>
+            </template>
+            <template v-else>{{ updateStatus }}</template>
 
-      <!-- Main customization entries -->
-      <option-toggle storageKey="tetrioPlusEnabled" mode="show">
-        <fieldset class="section contentPackInfo" v-if="contentPack">
-          <legend>Content Pack</legend>
-          <div v-if="contentPackIssue" style="max-width: 400px">
-            This page is attempting to use a remote content pack, but
-            {{ contentPackIssue }}.
-          </div>
-          <div v-else>
-            This page is using a remote content pack.<br>
-            <a class="longLink" :href="contentPack">{{ contentPack }}</a><br>
-            <button @click="openSettingsIO(contentPack)">Install this pack</button>
-            <button @click="clearPack" v-if="isElectron">Stop</button>
-          </div>
-        </fieldset>
+            <!-- Main customization entries -->
+            <option-toggle storageKey="tetrioPlusEnabled" mode="show">
+                <fieldset class="section contentPackInfo" v-if="contentPack">
+                    <legend>Content Pack</legend>
+                    <div v-if="contentPackIssue" style="max-width: 400px">
+                        This page is attempting to use a remote content pack, but
+                        {{ contentPackIssue }}.
+                    </div>
+                    <div v-else>
+                        This page is using a remote content pack.<br>
+                        <a class="longLink" :href="contentPack">{{ contentPack }}</a><br>
+                        <button @click="openSettingsIO(contentPack)">Install this pack</button>
+                        <button @click="clearPack" v-if="isElectron">Stop</button>
+                    </div>
+                </fieldset>
 
-        <fieldset class="section">
-          <legend>Block skins</legend>
-          <skin-changer />
-        </fieldset>
-        <fieldset class="section">
-          <legend>Other skins</legend>
-          <other-skins-changer />
-        </fieldset>
-        <fieldset class="section">
-          <legend>Sound effects</legend>
-          <sfx-manager />
-        </fieldset>
-        <fieldset class="section">
-          <legend>Music</legend>
-          <music-manager />
-        </fieldset>
-        <fieldset class="section">
-          <legend>Backgrounds</legend>
-          <background-manager />
-        </fieldset>
-        <fieldset class="section">
-          <legend>Custom features</legend>
-          <option-toggle storageKey="enableAllSongTweaker">
+                <fieldset class="section">
+                    <legend>Block skins</legend>
+                    <skin-changer/>
+                </fieldset>
+                <fieldset class="section">
+                    <legend>Other skins</legend>
+                    <other-skins-changer/>
+                </fieldset>
+                <fieldset class="section">
+                    <legend>Sound effects</legend>
+                    <sfx-manager/>
+                </fieldset>
+                <fieldset class="section">
+                    <legend>Music</legend>
+                    <music-manager/>
+                </fieldset>
+                <fieldset class="section">
+                    <legend>Backgrounds</legend>
+                    <background-manager/>
+                </fieldset>
+                <fieldset class="section">
+                    <legend>Custom features</legend>
+                    <option-toggle storageKey="enableAllSongTweaker">
             <span :title="(
               'Adds a field to the in-game music tweaker that allows you to ' +
               'set the occurance rate for all songs at once.'
             )">
               Enable 'All Songs' in music tweaker
             </span>
-          </option-toggle>
-          <div class="option-group">
-            <option-toggle storageKey="enableCustomMaps">
+                    </option-toggle>
+                    <div class="option-group">
+                        <option-toggle storageKey="enableCustomMaps">
               <span :title="(
                 'Enables using custom maps for singleplayer. Open the editor ' +
                 'and set the map string under solo -> custom -> meta.'
               )">
                 Enable custom maps
               </span>
-            </option-toggle>
-            <div>
-              <option-toggle inline storageKey="enableTouchControls">
+                        </option-toggle>
+                        <div>
+                            <option-toggle inline storageKey="enableTouchControls">
                 <span :title="(
                   'Allows you to control the game using touch inputs. Inputs ' +
                   'are mapped to two virtual joysticks on each side of the page. ' +
@@ -116,52 +117,53 @@ const app = new Vue({
                 )">
                   Enable touch controls
                 </span>
-              </option-toggle>
-              <option-toggle inline storageKey="enableTouchControls" mode="show">
-                <button @click="openTouchEditor">Edit</button>
-              </option-toggle>
-              <option-toggle storageKey="enableEmoteTab">
+                            </option-toggle>
+                            <option-toggle inline storageKey="enableTouchControls" mode="show">
+                                <button @click="openTouchEditor">Edit</button>
+                            </option-toggle>
+                            <option-toggle storageKey="enableEmoteTab">
                 <span :title="(
                   'Shows an emote picker when pressing tab in chat'
                 )">
                   Enable emote picker
                 </span>
-              </option-toggle>
-            </div>
-            <option-toggle storageKey="enableReplaySaver" @toggled="requestDownloadPermission()">
+                            </option-toggle>
+                        </div>
+                        <option-toggle storageKey="enableReplaySaver" @toggled="requestDownloadPermission()">
               <span title="Automatically downloads replays and saves them in \`~/Downloads/tetrio-plus-replays\`">
                 Enable replay saver
               </span>
-            </option-toggle>
-            <option-toggle storageKey="enableOSD">
+                        </option-toggle>
+                        <option-toggle storageKey="enableOSD">
               <span :title="(
                 'Shows what keys are pressed, for streaming or recording. ' +
                 'Works on replays too!'
               )">
                 Enable key OSD
               </span>
-            </option-toggle>
-            <option-toggle storageKey="enableOSD" mode="show">
-              <option-toggle storageKey="useOldOSDIcons">
-                Use old OSD icons
-              </option-toggle>
-            </option-toggle>
-            <button @click="openWOSHIZHAZHA120Customize">Open WOSHIZHAZHA120's Customize</button>
-          </div>
-        </fieldset>
-        <fieldset class="section">
-          <legend>Miscellaneous</legend>
-          <div class="option-group">
-            <url-pack-loader />
+                        </option-toggle>
+                        <option-toggle storageKey="enableOSD" mode="show">
+                            <option-toggle storageKey="useOldOSDIcons">
+                                Use old OSD icons
+                            </option-toggle>
+                        </option-toggle>
+                        <button @click="openTetrioPlusPlusCustomize">打开 tetr.io plus + 定制</button>
+                    </div>
+                </fieldset>
+                <fieldset class="section">
+                    <legend>Miscellaneous</legend>
+                    <div class="option-group">
+                        <url-pack-loader/>
 
-            <option-toggle storageKey="watermarkEnabled" mode="trigger" v-if="!debugMode" @trigger="enableDebugMode()"></option-toggle>
-            <option-toggle storageKey="watermarkEnabled" v-if="debugMode">
+                        <option-toggle storageKey="watermarkEnabled" mode="trigger" v-if="!debugMode"
+                                       @trigger="enableDebugMode()"></option-toggle>
+                        <option-toggle storageKey="watermarkEnabled" v-if="debugMode">
               <span title="Shows a watermark in-game that indicates your usage of TETR.IO PLUS. This is in addition to the sigliatrip marker that the base game displays when it detects modifications.">
                 Show extended modded watermark
               </span>
-            </option-toggle>
-            
-            <option-toggle storageKey="bypassBootstrapper">
+                        </option-toggle>
+
+                        <option-toggle storageKey="bypassBootstrapper">
               <span :title="(
                 'Disables integrity checks on the tetrio.js file and loads ' +
                 'it directly. Fixes stacktraces but causes issues with ' +
@@ -169,26 +171,26 @@ const app = new Vue({
               )">
                 Bypass bootstrapper (deprecated)
               </span>
-            </option-toggle>
+                        </option-toggle>
 
-            <option-toggle storageKey="openDevtoolsOnStart" v-if="isElectron">
+                        <option-toggle storageKey="openDevtoolsOnStart" v-if="isElectron">
               <span :title="(
                 'Opens the developer tools as soon as the game launches. ' +
                 'Works even if you can\\'t open them via hotkey'
               )">
                 Open devtools automatically
               </span>
-            </option-toggle>
+                        </option-toggle>
 
-            <option-toggle storageKey="hideTetrioPlusOnStartup" v-if="isElectron">
+                        <option-toggle storageKey="hideTetrioPlusOnStartup" v-if="isElectron">
               <span :title="(
                 'Hides this window on startup. You can press ctrl-t to reopen it.'
               )">
                 Hide TETR.IO PLUS window on startup
               </span>
-            </option-toggle>
+                        </option-toggle>
 
-            <option-toggle storageKey="forceIPCFetch" v-if="isElectron">
+                        <option-toggle storageKey="forceIPCFetch" v-if="isElectron">
               <span :title="(
                 'Makes all HTTP requests from the context of the main TETR.IO window instead of the main electron ' +
                 'context.  Can help in some situations where responses are invalid (e.g. otherwise-undetected ' +
@@ -196,49 +198,49 @@ const app = new Vue({
               )">
                 Force HTTP fetch over IPC fallback
               </span>
-            </option-toggle>
+                        </option-toggle>
 
-            <option-toggle storageKey="disableSuppressExitPrompt" v-if="isElectron">
+                        <option-toggle storageKey="disableSuppressExitPrompt" v-if="isElectron">
               <span title="TETR.IO PLUS by default disables the 'EXIT TETR.IO?' prompt. This option re-enables it.">
                 Disable suppression of exit prompt
               </span>
-            </option-toggle>
+                        </option-toggle>
 
-            <div v-if="isElectron">
-              <option-toggle storageKey="enableUpdateCheck" @changed="updateCheck()">
+                        <div v-if="isElectron">
+                            <option-toggle storageKey="enableUpdateCheck" @changed="updateCheck()">
                 <span title="Notifies you if an update is available">
                   Enable update check
                 </span>
-              </option-toggle>
-              <style-editor />
-            </div>
+                            </option-toggle>
+                            <style-editor/>
+                        </div>
 
-            <option-toggle
-              storageKey="debugBreakTheGame"
-              mode="trigger"
-              v-if="!debugMode"
-              @trigger="enableDebugMode()"
-            ></option-toggle>
-            <option-toggle storageKey="debugBreakTheGame" v-if="debugMode">
+                        <option-toggle
+                                storageKey="debugBreakTheGame"
+                                mode="trigger"
+                                v-if="!debugMode"
+                                @trigger="enableDebugMode()"
+                        ></option-toggle>
+                        <option-toggle storageKey="debugBreakTheGame" v-if="debugMode">
               <span title="Has a minor chance of completely breaking the game 100% of the time">
                 Break the game (May break the game)
               </span>
+                        </option-toggle>
+
+                        <div class="control-group" v-if="debugMode">
+                            <button @click="openStorageTool()" title="Opens storage tool">
+                                Open arbitrary storage writer tool
+                            </button>
+                        </div>
+                    </div>
+                </fieldset>
             </option-toggle>
 
-            <div class="control-group" v-if="debugMode">
-              <button @click="openStorageTool()" title="Opens storage tool">
-                Open arbitrary storage writer tool
-              </button>
-            </div>
-          </div>
-        </fieldset>
-      </option-toggle>
 
-
-      <fieldset class="section">
-        <legend>Management</legend>
-        <div class="option-group">
-          <option-toggle storageKey="tetrioPlusEnabled">
+            <fieldset class="section">
+                <legend>Management</legend>
+                <div class="option-group">
+                    <option-toggle storageKey="tetrioPlusEnabled">
             <span :title="(
               'Toggles ALL FEATURES (that use request rewriting or injected scripts' +
               ', at least) on or off. Great for troubleshooting, but this is NOT ' +
@@ -246,45 +248,45 @@ const app = new Vue({
             )">
               TETR.IO PLUS enabled
             </span>
-          </option-toggle>
-          <theme-manager v-if="!isElectron" />
-          <div v-if="isElectron && showUninstallerButton">
-            <button @click="uninstall">Uninstall TETR.IO PLUS</button>
-          </div>
-          <div class="control-group">
-            <button @click="openSettingsIO()" title="Opens the settings manager">
-              Manage data / import TPSE
-            </button>
-            <button @click="openFixes()" title="Opens the quick fixes menu">
-              Quick fixes
-            </button>
-            <button @click="openTemplates()" title="Opens the template list">
-              Templates
-            </button>
-          </div>
-        </div>
-      </fieldset>
+                    </option-toggle>
+                    <theme-manager v-if="!isElectron"/>
+                    <div v-if="isElectron && showUninstallerButton">
+                        <button @click="uninstall">Uninstall TETR.IO PLUS</button>
+                    </div>
+                    <div class="control-group">
+                        <button @click="openSettingsIO()" title="Opens the settings manager">
+                            Manage data / import TPSE
+                        </button>
+                        <button @click="openFixes()" title="Opens the quick fixes menu">
+                            Quick fixes
+                        </button>
+                        <button @click="openTemplates()" title="Opens the template list">
+                            Templates
+                        </button>
+                    </div>
+                </div>
+            </fieldset>
 
-      <fieldset class="section" v-if="isElectron">
-        <legend>Tweaks</legend>
-        <div class="option-group">
-          <option-toggle storageKey="windowTitleStatus" v-if="isElectron">
+            <fieldset class="section" v-if="isElectron">
+                <legend>Tweaks</legend>
+                <div class="option-group">
+                    <option-toggle storageKey="windowTitleStatus" v-if="isElectron">
             <span title="Shows rich presence data in the TETR.IO window title.">
               Show status in window title
             </span>
-          </option-toggle>
-        </div>
-      </fieldset>
+                    </option-toggle>
+                </div>
+            </fieldset>
 
-      <!-- Footer -->
-      <fieldset class="section legendless">
-        <strong>Hard refresh (<kbd>ctrl-F5</kbd>) TETR.IO after making changes.</strong><br>
-        <a href="https://gitlab.com/UniQMG/tetrio-plus" @click="openSource($event)">
-          Source code and readme
-        </a>
-      </fieldset>
-    </div>
-  `,
+            <!-- Footer -->
+            <fieldset class="section legendless">
+                <strong>Hard refresh (<kbd>ctrl-F5</kbd>) TETR.IO after making changes.</strong><br>
+                <a href="https://gitlab.com/UniQMG/tetrio-plus" @click="openSource($event)">
+                    Source code and readme
+                </a>
+            </fieldset>
+        </div>
+    `,
     components: {
         OptionToggle,
         UrlPackLoader,
@@ -495,8 +497,8 @@ const app = new Vue({
                 alert(ex.toString());
             });
         },
-        async openWOSHIZHAZHA120Customize() {
-            await this.openPanel('source/WOSHIZHAZHA120/popup/index.html', 1200, 720);
+        async openTetrioPlusPlusCustomize() {
+            await this.openPanel('source/tetrio-plus-plus-customize/index.html', 1200, 720);
         },
         async updateCheck() {
             let res = await browser.storage.local.get('enableUpdateCheck');

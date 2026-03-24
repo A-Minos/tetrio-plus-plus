@@ -12,6 +12,13 @@ jobs:
         with:
           fetch-depth: 2
 
+      - uses: oven-sh/setup-bun@v2
+      - run: |
+          cd tetrio-plus-plus-customize
+          bun install
+          bun build
+          cd ..
+
       - run: ./scripts/build.sh
 
       - uses: actions/upload-artifact@v4

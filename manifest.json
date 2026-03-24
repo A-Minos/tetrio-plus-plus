@@ -49,7 +49,9 @@
       "source/filters/touch-controls-tetriojs-filter.js",
       "source/filters/emote-tab-tetriojs-filter.js",
       "source/filters/osd-request-filter.js",
-      "source/filters/debug-tetriojs-filter.js"
+      "source/filters/debug-tetriojs-filter.js",
+
+      "source/tetrio-plus-plus-customize/loaders/background.js"
     ]
   },
   "content_scripts": [
@@ -87,7 +89,8 @@
         "source/content/custom-maps.js",
         "source/content/bgmtweak-enhancer.js",
         "source/content/watermark.js",
-        "source/WOSHIZHAZHA120/content/plugin.js"
+
+        "source/tetrio-plus-plus-customize/loaders/preload.js"
       ],
       "run_at": "document_idle"
     }
