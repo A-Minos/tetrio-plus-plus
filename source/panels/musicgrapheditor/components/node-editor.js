@@ -7,62 +7,62 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
     template: html`
-    <fieldset :id="'node-' + node.id">
-      <legend>
-        <button @click="node.hidden = false" v-if="node.hidden == true">⮞</button>
-        <button @click="node.hidden = true" v-else>⮟</button>
-        <template v-if="node.type == 'root'">
-          Root
-        </template>
-        <template v-else>
-          <input type="text" v-model="node.name"/>
-          <button @click="removeNode(node)" class="icon-button">❌</button>
-          <button @click="copyNode(node)">Copy</button>
-          <button @click="shiftNode(node, -1)" class="icon-button">🔼</button>
-          <button @click="shiftNode(node, 1)" class="icon-button">🔽</button>
-        </template>
-      </legend>
+        <fieldset :id="'node-' + node.id">
+            <legend>
+                <button @click="node.hidden = false" v-if="node.hidden == true">⮞</button>
+                <button @click="node.hidden = true" v-else>⮟</button>
+                <template v-if="node.type == 'root'">
+                    Root
+                </template>
+                <template v-else>
+                    <input type="text" v-model="node.name"/>
+                    <button @click="removeNode(node)" class="icon-button">❌</button>
+                    <button @click="copyNode(node)">Copy</button>
+                    <button @click="shiftNode(node, -1)" class="icon-button">🔼</button>
+                    <button @click="shiftNode(node, 1)" class="icon-button">🔽</button>
+                </template>
+            </legend>
 
-      <div v-show="!node.hidden">
-        <node-music-editor :node="node" @change="$emit('change')" />
+            <div v-show="!node.hidden">
+                <node-music-editor :node="node" @change="$emit('change')"/>
 
-        <div v-if="(reverseLinkLookupTable[node.id] || []).size > 0"
-             class="section">
-          Linked from
-          <span v-for="link of reverseLinkLookupTable[node.id]" class="linkback">
+                <div v-if="(reverseLinkLookupTable[node.id] || []).size > 0"
+                     class="section">
+                    Linked from
+                    <span v-for="link of reverseLinkLookupTable[node.id]" class="linkback">
             <a href="#" @click="focus(link)">{{ link.name }}</a>
           </span>
-        </div>
+                </div>
 
-        Triggers
-        <div class="triggers section">
-          <div class="trigger" v-for="(trigger, i) of node.triggers" :trigger-index="i">
-            <trigger-editor
-              :nodes="nodes"
-              :node="node"
-              :trigger="trigger"
-              @focus="focus"
-              @change="$emit('change')"
-            />
-          </div>
-          <div class="paste-and-trigger-controls">
-            <button @click="addTrigger(node)">
-              New trigger
-            </button>
-            <button @click="pasteTrigger(node)" :disabled="!copiedTrigger">
-              Paste trigger
-            </button>
-            <button @click="pasteNode(node)" :disabled="!copiedNode">
-              Paste node here
-            </button>
-            <button @click="moveNode(node)" :disabled="!copiedNode">
-              Move node here
-            </button>
-          </div>
-        </div>
-      </div>
-    </fieldset>
-  `,
+                Triggers
+                <div class="triggers section">
+                    <div class="trigger" v-for="(trigger, i) of node.triggers" :trigger-index="i">
+                        <trigger-editor
+                                :nodes="nodes"
+                                :node="node"
+                                :trigger="trigger"
+                                @focus="focus"
+                                @change="$emit('change')"
+                        />
+                    </div>
+                    <div class="paste-and-trigger-controls">
+                        <button @click="addTrigger(node)">
+                            New trigger
+                        </button>
+                        <button @click="pasteTrigger(node)" :disabled="!copiedTrigger">
+                            Paste trigger
+                        </button>
+                        <button @click="pasteNode(node)" :disabled="!copiedNode">
+                            Paste node here
+                        </button>
+                        <button @click="moveNode(node)" :disabled="!copiedNode">
+                            Move node here
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    `,
     data: () => {
         return {clipboard}
     },

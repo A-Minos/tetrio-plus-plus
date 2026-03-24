@@ -10,12 +10,12 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 
 const app = new Vue({
     template: html`
-    <div class="split-pane" :class="{ 'debugger-active': !!debug.port }">
-      <div class="node-editor">
-        <div class="pane-header">
-          <button @click="save">Save changes</button>
-          <span :style="{ opacity: this.saveOpacity }">Saved!</span>
-          <span style="float: right;">
+        <div class="split-pane" :class="{ 'debugger-active': !!debug.port }">
+            <div class="node-editor">
+                <div class="pane-header">
+                    <button @click="save">Save changes</button>
+                    <span :style="{ opacity: this.saveOpacity }">Saved!</span>
+                    <span style="float: right;">
             <button @click="undo" :disabled="history.undo.length <= 1">
               Undo (x{{ history.undo.length-1 }})
             </button>
@@ -23,61 +23,63 @@ const app = new Vue({
               Redo (x{{ history.redo.length }})
             </button>
           </span>
+                </div>
+                <div class="node-list">
+                    <fieldset>
+                        <legend>Global configuration
+                            <button @click="resetConfig">reset</button>
+                        </legend>
+                        <b>Increasing these can lag your game.</b>
+
+                        <div>
+                            Active node limit:
+                            <input
+                                    type="number"
+                                    v-model.number="config.nodeLimit"
+                                    min="1"
+                                    @change="saveConfig"
+                            />
+                        </div>
+
+                        <div>
+                            Reported event rate limit:
+                            <input
+                                    type="number"
+                                    v-model.number="config.reportedEventRateLimit"
+                                    min="1"
+                                    @change="saveConfig"
+                            />/s
+                        </div>
+
+                        <div>
+                            Hard event rate limit:
+                            <input
+                                    type="number"
+                                    v-model.number="config.hardEventRateLimit"
+                                    min="1"
+                                    @change="saveConfig"
+                            />/s
+                        </div>
+                    </fieldset>
+
+                    <node-editor
+                            v-for="node of nodes"
+                            :key="node.id"
+                            :nodes="nodes"
+                            :node="node"
+                            @change="pushState"
+                            @pasteNode="pasteNode"
+                            @focus="focus"
+                    />
+                </div>
+                <button @click="addNode()">Add node</button>
+                <button @click="pasteNode()" :disabled="!copiedNode">Paste node</button>
+                <div class="scroll-past-end"></div>
+            </div>
+            <visual-editor :nodes="nodes" :debug="debug" @focus="focus" @change="pushState" ref="veditor"/>
+            <debugger v-show="debug.port" :debug="debug" ref="debugger"></debugger>
         </div>
-        <div class="node-list">
-          <fieldset>
-            <legend>Global configuration <button @click="resetConfig">reset</button></legend>
-            <b>Increasing these can lag your game.</b>
-
-            <div>
-              Active node limit:
-              <input
-                type="number"
-                v-model.number="config.nodeLimit"
-                min="1"
-                @change="saveConfig"
-              />
-            </div>
-
-            <div>
-              Reported event rate limit:
-              <input
-                type="number"
-                v-model.number="config.reportedEventRateLimit"
-                min="1"
-                @change="saveConfig"
-              />/s
-            </div>
-
-            <div>
-              Hard event rate limit:
-              <input
-                type="number"
-                v-model.number="config.hardEventRateLimit"
-                min="1"
-                @change="saveConfig"
-              />/s
-            </div>
-          </fieldset>
-          
-          <node-editor
-            v-for="node of nodes"
-            :key="node.id"
-            :nodes="nodes"
-            :node="node"
-            @change="pushState"
-            @pasteNode="pasteNode"
-            @focus="focus"
-          />
-        </div>
-        <button @click="addNode()">Add node</button>
-        <button @click="pasteNode()" :disabled="!copiedNode">Paste node</button>
-        <div class="scroll-past-end"></div>
-      </div>
-      <visual-editor :nodes="nodes" :debug="debug" @focus="focus" @change="pushState" ref="veditor" />
-      <debugger v-show="debug.port" :debug="debug" ref="debugger"></debugger>
-    </div>
-  `,
+    `,
     data: {
         history: {undo: [], redo: []},
         config: {
@@ -225,7 +227,7 @@ const app = new Vue({
             this.config.hardEventRateLimit = opt.musicGraphHardEventRateLimit ?? 10000;
             this.saveConfig();
             if (opt.musicGraph) {
-                this.nodes = JSON.parse(opt.musicGraph);
+                this.nodes = opt.musicGraph;
                 this.maxId = Math.max(...this.nodes.map(node => node.id));
             }
         }).then(() => {

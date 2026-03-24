@@ -4,30 +4,30 @@ import ListView from './components/ListView.js';
 
 const app = new Vue({
     template: html`
-    <div>
-      <header>
-        <button class="tab" v-for="itab of tabs" @click="tab = itab">
-          {{ itab.name }}
-        </button>
-        <button @click="save">
-          Save changes
-        </button>
-        <span style="color: red" v-if="builtinError">Failed to fetch override targets: {{builtinError}}</span>
-        <span :style="{ opacity: saveOpacity }">
+        <div>
+            <header>
+                <button class="tab" v-for="itab of tabs" @click="tab = itab">
+                    {{ itab.name }}
+                </button>
+                <button @click="save">
+                    Save changes
+                </button>
+                <span style="color: red" v-if="builtinError">Failed to fetch override targets: {{builtinError}}</span>
+                <span :style="{ opacity: saveOpacity }">
           Saved!
         </span>
-      </header>
-      <keep-alive>
-        <component
-          :is="tab.component"
-          :music="music"
-          :builtin="builtin"
-          @save="save"
-          @deleteSong="deleteSong"
-        />
-      </keep-alive>
-    </div>
-  `,
+            </header>
+            <keep-alive>
+                <component
+                        :is="tab.component"
+                        :music="music"
+                        :builtin="builtin"
+                        @save="save"
+                        @deleteSong="deleteSong"
+                />
+            </keep-alive>
+        </div>
+    `,
     data: {
         tabs: [
             {name: 'List View', component: ListView},

@@ -9,54 +9,54 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 
 export default {
     template: html`
-    <div ref="editor" class="visual-editor" :class="editorClass" :style="editorStyle" tabindex="0" @wheel="wheel">
-      <div class="events-per-second" v-if="debug.port">
-        Events per second: {{ debug.eventsPerSecond }}
-        <div v-if="debug.eventsPerSecondWarning">
-          ⚠️ Above reporting threshold, some events may not display.
+        <div ref="editor" class="visual-editor" :class="editorClass" :style="editorStyle" tabindex="0" @wheel="wheel">
+            <div class="events-per-second" v-if="debug.port">
+                Events per second: {{ debug.eventsPerSecond }}
+                <div v-if="debug.eventsPerSecondWarning">
+                    ⚠️ Above reporting threshold, some events may not display.
+                </div>
+            </div>
+            <button class="reset-zoom" v-if="camera.scale != 1" @click="camera.scale = 1">Reset zoom</button>
+            <div :style="scaleContainerStyle">
+                <div :style="translateContainerStyle">
+                    <ve-node
+                            v-for="node of nodes"
+                            :key="node.id"
+                            :nodes="nodes"
+                            :node="node"
+                            :connected="!!debug.port"
+                            :show-anchors="camera.scale > 0.5"
+                            @spawn="spawn(node)"
+                    />
+                    <div style="display: contents">
+                        <ve-live-node
+                                v-for="instance of debug.liveInstances"
+                                v-if="isFinite(instance.sourceId)"
+                                :key="instance.instanceId"
+                                :camera="camera"
+                                :nodes="nodes"
+                                :node="getNodeById(instance.sourceId)"
+                                :instance="instance"
+                                :index="liveInstancesByNode[instance.sourceId].indexOf(instance)"
+                                v-show="camera.scale > 0.5"
+                                @kill="kill(instance.instanceId)"
+                        />
+                    </div>
+                </div>
+                <ve-svg-container :camera="camera" :select-rect="selectRect" v-show="camera.scale > 0.25">
+                    <ve-svg-node-links
+                            v-for="node of nodes"
+                            :key="node.id"
+                            :nodes="nodes"
+                            :node="node"
+                            :events="debug.recentTriggerFires[node.id] || []"
+                            :draw-thick="camera.scale <= 0.5"
+                            :show-labels="camera.scale > 0.5"
+                    />
+                </ve-svg-container>
+            </div>
         </div>
-      </div>
-      <button class="reset-zoom" v-if="camera.scale != 1" @click="camera.scale = 1">Reset zoom</button>
-      <div :style="scaleContainerStyle">
-        <div :style="translateContainerStyle">
-          <ve-node
-            v-for="node of nodes"
-            :key="node.id"
-            :nodes="nodes"
-            :node="node"
-            :connected="!!debug.port"
-            :show-anchors="camera.scale > 0.5"
-            @spawn="spawn(node)"
-          />
-          <div style="display: contents">
-            <ve-live-node
-              v-for="instance of debug.liveInstances"
-              v-if="isFinite(instance.sourceId)"
-              :key="instance.instanceId"
-              :camera="camera"
-              :nodes="nodes"
-              :node="getNodeById(instance.sourceId)"
-              :instance="instance"
-              :index="liveInstancesByNode[instance.sourceId].indexOf(instance)"
-              v-show="camera.scale > 0.5"
-              @kill="kill(instance.instanceId)"
-            />
-          </div>
-        </div>
-        <ve-svg-container :camera="camera" :select-rect="selectRect" v-show="camera.scale > 0.25">
-          <ve-svg-node-links
-            v-for="node of nodes"
-            :key="node.id"
-            :nodes="nodes"
-            :node="node"
-            :events="debug.recentTriggerFires[node.id] || []"
-            :draw-thick="camera.scale <= 0.5"
-            :show-labels="camera.scale > 0.5"
-          />
-        </ve-svg-container>
-      </div>
-    </div>
-  `,
+    `,
     props: ['nodes', 'debug'],
     components: {veSvgContainer, veSvgNodeLinks, veLiveNode, veNode},
     mixins: [utils],
@@ -138,17 +138,20 @@ export default {
             if (active != this.$refs.editor && active != document.body) return;
 
             let musicGraph = null;
-            let result = await sanitizeAndLoadTPSE({
-                version: '0.25.3',
-                musicGraph: event.clipboardData.getData('text')
-            }, {
-                async set(pairs) {
-                    if (pairs.musicGraph)
-                        musicGraph = JSON.parse(pairs.musicGraph);
-                }
-            }, {
-                skipFileDependencies: true
-            });
+            let result = await sanitizeAndLoadTPSE(
+                {
+                    version: '0.25.3',
+                    musicGraph: JSON.parse(event.clipboardData.getData('text'))
+                },
+                {
+                    async set(pairs) {
+                        if (pairs.musicGraph) {
+                            musicGraph = pairs.musicGraph;
+                        }
+                    }
+                },
+                {skipFileDependencies: true}
+            );
             if (result.includes('ERROR')) {
                 alert(`Paste failed:\n${result}`);
                 return;

@@ -2,146 +2,147 @@ const html = arg => arg.join(''); // NOOP, for editor integration.
 
 const app = new Vue({
     template: html`
-    <div>
-      <button @click="save">Save changes</button>
-      <span :style="{ opacity: this.saveOpacity }">Saved!</span><br />
+        <div>
+            <button @click="save">Save changes</button>
+            <span :style="{ opacity: this.saveOpacity }">Saved!</span><br/>
 
-      Touch control mode:
-      <select v-model="config.mode">
-        <option value="touchpad">Touchpad</option>
-        <option value="keys">Touchkeys</option>
-        <option value="hybrid">Both</option>
-      </select>
+            Touch control mode:
+            <select v-model="config.mode">
+                <option value="touchpad">Touchpad</option>
+                <option value="keys">Touchkeys</option>
+                <option value="hybrid">Both</option>
+            </select>
 
-      <template v-if="config.mode != 'keys'">
-        <div class="form-control">
-          Deadzone
-          <input type="range" min="10" max="250" v-model.number="config.deadzone" />
-          {{ config.deadzone }}px
+            <template v-if="config.mode != 'keys'">
+                <div class="form-control">
+                    Deadzone
+                    <input type="range" min="10" max="250" v-model.number="config.deadzone"/>
+                    {{ config.deadzone }}px
 
-          (<input type="checkbox" v-model="visualizeDeadzone" />
-          visualize)
-        </div>
+                    (<input type="checkbox" v-model="visualizeDeadzone"/>
+                    visualize)
+                </div>
 
-        <div class="touch-preview" :style="touchPreviewStyle">
-          <div class="touch-zone">
-            <selector side="top" v-model="config.binding.L_up"></selector>
-            <selector side="left" v-model="config.binding.L_left"></selector>
-            <selector side="right" v-model="config.binding.L_right"></selector>
-            <selector side="bottom" v-model="config.binding.L_down"></selector>
-          </div>
-          <div class="touch-zone">
-            <selector side="top" v-model="config.binding.R_up"></selector>
-            <selector side="left" v-model="config.binding.R_left"></selector>
-            <selector side="right" v-model="config.binding.R_right"></selector>
-            <selector side="bottom" v-model="config.binding.R_down"></selector>
-          </div>
-        </div>
-      </template>
+                <div class="touch-preview" :style="touchPreviewStyle">
+                    <div class="touch-zone">
+                        <selector side="top" v-model="config.binding.L_up"></selector>
+                        <selector side="left" v-model="config.binding.L_left"></selector>
+                        <selector side="right" v-model="config.binding.L_right"></selector>
+                        <selector side="bottom" v-model="config.binding.L_down"></selector>
+                    </div>
+                    <div class="touch-zone">
+                        <selector side="top" v-model="config.binding.R_up"></selector>
+                        <selector side="left" v-model="config.binding.R_left"></selector>
+                        <selector side="right" v-model="config.binding.R_right"></selector>
+                        <selector side="bottom" v-model="config.binding.R_down"></selector>
+                    </div>
+                </div>
+            </template>
 
-      <div v-if="config.mode == 'hybrid'">
-        <input type="checkbox" v-model="showDeadzoneOnKeys" />
-        <span @click="showDeadzoneOnKeys = !showDeadzoneOnKeys">
+            <div v-if="config.mode == 'hybrid'">
+                <input type="checkbox" v-model="showDeadzoneOnKeys"/>
+                <span @click="showDeadzoneOnKeys = !showDeadzoneOnKeys">
           Preview touchpads on key editor
         </span>
-      </div>
+            </div>
 
-      <div v-if="config.mode != 'touchpad'">
-        Touchkey templates:
-        <button @click="loadDefault()">Load default</button>
-        <button @click="loadExample()">Load example</button>
-      </div>
+            <div v-if="config.mode != 'touchpad'">
+                Touchkey templates:
+                <button @click="loadDefault()">Load default</button>
+                <button @click="loadExample()">Load example</button>
+            </div>
 
-      <div class="key-configurator-container" ref="keyConfigContainer" v-if="config.mode != 'touchpad'">
-        <div class="key-configurator-controls">
-          <button @click="addKey()">Add key</button>
-          <template v-if="!selectedKey">
+            <div class="key-configurator-container" ref="keyConfigContainer" v-if="config.mode != 'touchpad'">
+                <div class="key-configurator-controls">
+                    <button @click="addKey()">Add key</button>
+                    <template v-if="!selectedKey">
             <span style="white-space: nowrap;">
               Binding:
               <select><option default disabled>Select a key</option></select>
             </span>
-            <button disabled>Delete</button>
-            <span style="white-space: nowrap;">
+                        <button disabled>Delete</button>
+                        <span style="white-space: nowrap;">
               Behavior:
               <select><option default disabled>Select a key</option></select>
             </span>
-            <button disabled>Move to top</button>
-            <button disabled>Move to bottom</button>
-          </template>
-          <template v-else>
+                        <button disabled>Move to top</button>
+                        <button disabled>Move to bottom</button>
+                    </template>
+                    <template v-else>
             <span style="white-space: nowrap;">
               Binding:
               <selector side="none" v-model="selectedKey.bind"></selector>
             </span>
-            <button @click="deleteKey(selectedKey)">Delete</button>
-            <span style="white-space: nowrap;">
+                        <button @click="deleteKey(selectedKey)">Delete</button>
+                        <span style="white-space: nowrap;">
               Behavior:
               <select v-model="selectedKey.behavior">
                 <option value="hover">Touch can start elsewhere (hover)</option>
                 <option value="tap">Touch must start on key (tap)</option>
               </select>
             </span>
-            <span style="white-space: nowrap;">
+                        <span style="white-space: nowrap;">
               <button @click="moveTop(selectedKey)">Move to top</button>
               <button @click="moveBottom(selectedKey)">Move to bottom</button>
             </span>
-          </template>
+                    </template>
 
-          <span style="white-space: nowrap;">
+                    <span style="white-space: nowrap;">
             Show editor
             <button @click="$refs.keyContainer.requestFullscreen()">fullscreen</button>
             <button @click="$refs.keyConfigContainer.requestFullscreen()">fullscreen with controls</button>
           </span>
-        </div>
+                </div>
 
-        <div class="key-configurator" ref="keyContainer">
-          <template v-if="config.mode == 'hybrid' && showDeadzoneOnKeys">
-            <div class="touch-zone" :style="{ '--deadzone': config.deadzone + 'px' }"></div>
-            <div class="touch-zone right" :style="{ '--deadzone': config.deadzone + 'px' }"></div>
-          </template>
+                <div class="key-configurator" ref="keyContainer">
+                    <template v-if="config.mode == 'hybrid' && showDeadzoneOnKeys">
+                        <div class="touch-zone" :style="{ '--deadzone': config.deadzone + 'px' }"></div>
+                        <div class="touch-zone right" :style="{ '--deadzone': config.deadzone + 'px' }"></div>
+                    </template>
 
-          <template v-for="[layer, text] of [['key', true], ['key-ghost-text', true], ['key-border', false], ['key-border-2', false]]">
-            <div
-              :key="layer + '_' + i"
-              :index="i"
-              v-for="(key, i) of config.keys"
-              :class="{ [layer]: true, selected: selectedKey == key, 'key-layer': true }"
-              :style="keyStyle(key)"
-            >
-              <template v-if="text">
-                {{ key.bind }}<br>
-                x {{ (key.x).toFixed(1) }} %<br>
-                y {{ (key.y).toFixed(1) }} %<br>
-                w {{ (key.w).toFixed(1) }} %<br>
-                h {{ (key.h).toFixed(1) }} %<br>
-                mode: {{ key.behavior }}
-              </template>
+                    <template
+                            v-for="[layer, text] of [['key', true], ['key-ghost-text', true], ['key-border', false], ['key-border-2', false]]">
+                        <div
+                                :key="layer + '_' + i"
+                                :index="i"
+                                v-for="(key, i) of config.keys"
+                                :class="{ [layer]: true, selected: selectedKey == key, 'key-layer': true }"
+                                :style="keyStyle(key)"
+                        >
+                            <template v-if="text">
+                                {{ key.bind }}<br>
+                                x {{ (key.x).toFixed(1) }} %<br>
+                                y {{ (key.y).toFixed(1) }} %<br>
+                                w {{ (key.w).toFixed(1) }} %<br>
+                                h {{ (key.h).toFixed(1) }} %<br>
+                                mode: {{ key.behavior }}
+                            </template>
+                        </div>
+                    </template>
+                </div>
             </div>
-          </template>
         </div>
-      </div>
-    </div>
-  `,
+    `,
     components: {
         selector: {
             template: html`
-        <select class="touch-bind-select" :class="side" v-model="subvalue">
-          <option :value="null">&lt;None&gt;</option>
-          <option value="moveLeft">Move left</option>
-          <option value="moveRight">Move right</option>
-          <option value="hardDrop">Hard drop</option>
-          <option value="softDrop">Soft drop</option>
-          <option value="rotateCCW">Rotate CCW</option>
-          <option value="rotateCW">Rotate CW</option>
-          <option value="rotate180">Rotate 180</option>
-          <option value="hold">Hold</option>
-          <option value="retry">Retry</option>
-          <option value="exit">Exit</option>
-          <option value="fullscreen">Fullscreen</option>
-          <option value="enter">Enter/Return</option>
-          <option value="hide">Hide controls</option>
-        </select>
-      `,
+                <select class="touch-bind-select" :class="side" v-model="subvalue">
+                    <option :value="null">&lt;None&gt;</option>
+                    <option value="moveLeft">Move left</option>
+                    <option value="moveRight">Move right</option>
+                    <option value="hardDrop">Hard drop</option>
+                    <option value="softDrop">Soft drop</option>
+                    <option value="rotateCCW">Rotate CCW</option>
+                    <option value="rotateCW">Rotate CW</option>
+                    <option value="rotate180">Rotate 180</option>
+                    <option value="hold">Hold</option>
+                    <option value="retry">Retry</option>
+                    <option value="exit">Exit</option>
+                    <option value="fullscreen">Fullscreen</option>
+                    <option value="enter">Enter/Return</option>
+                    <option value="hide">Hide controls</option>
+                </select>
+            `,
             props: ['side', 'value'],
             data: () => ({subvalue: true}),
             watch: {
@@ -281,7 +282,7 @@ const app = new Vue({
         },
         save() {
             browser.storage.local.set({
-                touchControlConfig: JSON.stringify(this.config)
+                touchControlConfig: this.config
             });
             this.saveOpacity = 1.25;
             let timeout = setInterval(() => {
@@ -294,7 +295,7 @@ const app = new Vue({
     async mounted() {
         let configObj = await browser.storage.local.get('touchControlConfig');
         let config = configObj.touchControlConfig;
-        if (config) this.config = JSON.parse(config);
+        if (config) this.config = config;
 
         this.updateBoundingRect();
         window.addEventListener('resize', () => {

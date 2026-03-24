@@ -32,7 +32,7 @@ function musicGraph(module) {
     ]);
     if (!musicEnabled || !musicGraphEnabled)
         return;
-    musicGraph = musicGraph ?? '[]';
+    musicGraph = musicGraph ?? [];
     musicGraphNodeLimit = musicGraphNodeLimit ?? 100;
     musicGraphReportedEventRateLimit = musicGraphReportedEventRateLimit ?? 250;
     musicGraphHardEventRateLimit = musicGraphHardEventRateLimit ?? 10000;
@@ -50,7 +50,7 @@ function musicGraph(module) {
     const audioBuffers = {};
 
     const graph = {};
-    for (let src of JSON.parse(musicGraph)) {
+    for (let src of musicGraph) {
         graph[src.id] = src;
         if (!src.audio) continue;
         if (audioBuffers[src.audio]) continue;
