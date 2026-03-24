@@ -38,7 +38,8 @@ files=$(
     ! -path "./microplus.js" \
     ! -path "./package-lock.json" \
     ! -path "./package.json" \
-    ! -path "./yarn.lock"
+    ! -path "./yarn.lock" \
+    ! -path "./tetrio-plus-plus-customize/*"
 )
 for file in $files; do
   process $file
