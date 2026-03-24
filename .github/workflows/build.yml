@@ -8,20 +8,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: oven-sh/setup-bun@v2
       - uses: actions/checkout@v6
         with:
           fetch-depth: 2
 
+      - uses: oven-sh/setup-bun@v2
       - run: |
           cd tetrio-plus-plus-customize
-          
           bun install
           bun run build
-          
           cd ..
-          
-          ./scripts/build.sh
+
+      - run: ./scripts/build.sh
 
       - uses: actions/upload-artifact@v4
         with:
