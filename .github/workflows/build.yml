@@ -12,15 +12,6 @@ jobs:
         with:
           fetch-depth: 2
 
-      - id: cache-tpsecore
-        uses: actions/cache@v5
-        with:
-          path: pkg
-          key: ${{ github.repository }}/tpsecore
-
-      - if: steps.cache-tpsecore.outputs.cache-hit != 'true'
-        run: ./scripts/build-tpsecore.sh
-
       - run: ./scripts/build.sh
 
       - uses: actions/upload-artifact@v4
