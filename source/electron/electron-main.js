@@ -628,7 +628,13 @@ app.whenReady().then(async () => {
         greenlog("js: " + script);
         let js = fs.readFileSync(path.join(__dirname, '../..', script));
         try {
-            await vm.runInContext(js, context);
+            const module = new vm.SourceTextModule(js, {context});
+
+            await module.link(() => {
+
+            });
+
+            await module.evaluate();
         } catch (ex) {
             greenlog("Error while executing script", script, ex);
         }
