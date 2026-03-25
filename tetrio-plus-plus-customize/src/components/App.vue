@@ -1,48 +1,50 @@
 <script lang="ts" setup>
-import {darkTheme} from "naive-ui";
+import { darkTheme } from "naive-ui";
 import plugins from "@/plugins";
-import {type Ref, ref, watch} from "vue";
-import {isEmptyish, isNullish} from "remeda";
-import {generatePluginStateStorageKey} from "@/utils/plugin";
-import {computedAsync} from "@vueuse/core";
-import hljs from 'highlight.js/lib/core'
+import { type Ref, ref, watch } from "vue";
+import { isEmptyish, isNullish } from "remeda";
+import { generatePluginStateStorageKey } from "@/utils/plugin";
+import { computedAsync } from "@vueuse/core";
+import hljs from "highlight.js/lib/core";
 import type Plugin from "@/types/plugin";
-import css from 'highlight.js/lib/languages/css'
-import javascript from 'highlight.js/lib/languages/javascript'
+import css from "highlight.js/lib/languages/css";
+import javascript from "highlight.js/lib/languages/javascript";
 
-hljs.registerLanguage('css', css)
-hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage("css", css);
+hljs.registerLanguage("javascript", javascript);
 
 const mappedPlugins = computedAsync(async () => {
     return Promise.all(
-        plugins.map(async plugin => {
-            let state: Ref<boolean | null>
+        plugins.map(async (plugin) => {
+            let state: Ref<boolean | null>;
 
             try {
-                const storageKey = generatePluginStateStorageKey(plugin.id)
-                state = ref<boolean>(await browser.storage.local.get(storageKey).then(data => !!data[storageKey]) ?? false)
+                const storageKey = generatePluginStateStorageKey(plugin.id);
+                state = ref<boolean>(
+                    (await browser.storage.local.get(storageKey).then((data) => !!data[storageKey])) ?? false,
+                );
 
-                watch(state, newState => {
+                watch(state, (newState) => {
                     browser.storage.local.set({
-                        [storageKey]: newState
-                    })
-                })
+                        [storageKey]: newState,
+                    });
+                });
             } catch (e) {
-                console.error(e)
-                state = ref<null>(null)
+                console.error(e);
+                state = ref<null>(null);
             }
 
             return {
                 ...plugin,
                 show_code: ref(false),
-                state
+                state,
             } satisfies Plugin & {
-                show_code: Ref<boolean>
-                state: Ref<boolean | null>
-            }
-        })
-    )
-}, [])
+                show_code: Ref<boolean>;
+                state: Ref<boolean | null>;
+            };
+        }),
+    );
+}, []);
 </script>
 
 <template>
@@ -73,29 +75,50 @@ const mappedPlugins = computedAsync(async () => {
 
                                 <template #description>{{ plugin.description }}</template>
 
-                                <n-switch v-model:value="plugin.state.value" :disabled="isNullish(plugin.state.value)"/>
+                                <n-switch
+                                    v-model:value="plugin.state.value"
+                                    :disabled="isNullish(plugin.state.value)"
+                                />
                             </n-thing>
 
                             <n-drawer v-model:show="plugin.show_code.value" placement="left" width="50%">
                                 <n-drawer-content title="代码">
                                     <n-flex size="small" vertical>
-                                        <n-card v-if="!isEmptyish(plugin.style)" class="plugin_code" size="small"
-                                                title="样式">
-                                            <n-code :code="plugin.style" language="CSS" show-line-numbers word-wrap/>
+                                        <n-card
+                                            v-if="!isEmptyish(plugin.style)"
+                                            class="plugin_code"
+                                            size="small"
+                                            title="样式"
+                                        >
+                                            <n-code :code="plugin.style" language="CSS" show-line-numbers word-wrap />
                                         </n-card>
 
-                                        <n-card v-if="!isEmptyish(plugin.script)" class="plugin_code" size="small"
-                                                title="脚本">
-                                            <n-code :code="plugin.script.toString()" language="JavaScript"
-                                                    show-line-numbers
-                                                    word-wrap/>
+                                        <n-card
+                                            v-if="!isEmptyish(plugin.script)"
+                                            class="plugin_code"
+                                            size="small"
+                                            title="脚本"
+                                        >
+                                            <n-code
+                                                :code="plugin.script.toString()"
+                                                language="JavaScript"
+                                                show-line-numbers
+                                                word-wrap
+                                            />
                                         </n-card>
 
-                                        <n-card v-if="!isEmptyish(plugin.background_script)" class="plugin_code"
-                                                size="small"
-                                                title="后台脚本">
-                                            <n-code :code="plugin.background_script.toString()" language="JavaScript"
-                                                    show-line-numbers word-wrap/>
+                                        <n-card
+                                            v-if="!isEmptyish(plugin.background_script)"
+                                            class="plugin_code"
+                                            size="small"
+                                            title="后台脚本"
+                                        >
+                                            <n-code
+                                                :code="plugin.background_script.toString()"
+                                                language="JavaScript"
+                                                show-line-numbers
+                                                word-wrap
+                                            />
                                         </n-card>
                                     </n-flex>
                                 </n-drawer-content>

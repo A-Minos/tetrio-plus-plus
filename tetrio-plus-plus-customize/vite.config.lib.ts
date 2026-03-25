@@ -1,28 +1,31 @@
-import {defineConfig} from 'vite'
-import {resolve} from "node:path";
+import { defineConfig } from "vite";
+import { resolve } from "node:path";
 
 // https://vite.dev/config
-export default defineConfig(env => {
+export default defineConfig((env) => {
     return {
-        base: './',
+        base: "./",
         build: {
-            outDir: resolve(__dirname, '../source/tetrio-plus-plus-customize'),
+            outDir: resolve(__dirname, "../source/tetrio-plus-plus-customize"),
+            emptyOutDir: false,
             rolldownOptions: {
-                input: resolve(__dirname, `src/loaders/${env.mode.startsWith('lib:') ? env.mode.split('lib:')[1] : null}.ts`),
+                input: resolve(
+                    __dirname,
+                    `src/loaders/${env.mode.startsWith("lib:") ? env.mode.split("lib:")[1] : null}.ts`,
+                ),
                 output: [
                     {
-                        format: 'iife',
-                        name: 'TetrioPlusPlusCustomize',
-                        entryFileNames: 'loaders/[name].js',
-                        codeSplitting: true
-                    }
-                ]
-            }
+                        format: "iife",
+                        entryFileNames: "loaders/[name].js",
+                        codeSplitting: false,
+                    },
+                ],
+            },
         },
         resolve: {
             alias: {
-                '@': resolve(__dirname, 'src')
-            }
-        }
-    }
-})
+                "@": resolve(__dirname, "src"),
+            },
+        },
+    };
+});

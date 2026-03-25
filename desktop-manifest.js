@@ -35,7 +35,7 @@ manifest.browser_specific_settings.desktop_client = {
         "source/filters/generic-texture-request-filter.js",
         "source/filters/winter-compat-filter.js",
 
-        "source/tetrio-plus-plus-customize/loaders/background.js"
+        "require:source/tetrio-plus-plus-customize/loaders/background.js"
     ],
     "preload_scripts": [
         "source/shared/migrate.js",

@@ -626,15 +626,14 @@ app.whenReady().then(async () => {
     let scripts = manifest.browser_specific_settings.desktop_client.scripts;
     for (let script of scripts) {
         greenlog("js: " + script);
+        if (script.startsWith('require:')) {
+            const requirePath = path.join(__dirname, '../..', script.split('require:')[1])
+            await require(requirePath)();
+            continue
+        }
         let js = fs.readFileSync(path.join(__dirname, '../..', script));
         try {
-            const module = new vm.SourceTextModule(js, {context});
-
-            await module.link(() => {
-
-            });
-
-            await module.evaluate();
+            vm.runInContext(js, context);
         } catch (ex) {
             greenlog("Error while executing script", script, ex);
         }
