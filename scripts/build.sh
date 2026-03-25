@@ -38,7 +38,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install zip -y -qq
 DEBIAN_FRONTEND=noninteractive apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev -y -qq
 
 # install node
-apt install nodejs npm -y
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+nvm install node
 node -v
 npm i -g yarn
 
