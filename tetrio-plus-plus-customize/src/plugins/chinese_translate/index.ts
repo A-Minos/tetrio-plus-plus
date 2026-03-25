@@ -1,5 +1,6 @@
 import type Plugin from "@/types/plugin";
 import script from '@/plugins/chinese_translate/plugin'
+import background_script from '@/plugins/chinese_translate/filter'
 
 export default {
     id: 'chinese_translate',
@@ -8,5 +9,6 @@ export default {
     version: '1.1.0',
     description: '汉化游戏',
 
-    script
+    script,
+    background_script
 } satisfies Plugin
