@@ -600,6 +600,7 @@ app.whenReady().then(async () => {
     });
 
     /* Not a security measure! */
+    let promises = []
     let context = vm.createContext({
         mainWindow: await mainWindow,
         rewriteHandlers,
@@ -620,17 +621,13 @@ app.whenReady().then(async () => {
         btoa(b) {
             return Buffer.from(b).toString('base64');
         },
+        promises
     });
 
     greenlog("loading tetrio plus scripts");
     let scripts = manifest.browser_specific_settings.desktop_client.scripts;
     for (let script of scripts) {
         greenlog("js: " + script);
-        if (script.startsWith('require:')) {
-            const requirePath = path.join(__dirname, '../..', script.split('require:')[1])
-            await require(requirePath)();
-            continue
-        }
         let js = fs.readFileSync(path.join(__dirname, '../..', script));
         try {
             vm.runInContext(js, context);
@@ -638,6 +635,8 @@ app.whenReady().then(async () => {
             greenlog("Error while executing script", script, ex);
         }
     }
+
+    await Promise.all(promises)
 
     if (storeGet('openDevtoolsOnStart')) {
         let mainContents = (await mainWindow).webContents;
