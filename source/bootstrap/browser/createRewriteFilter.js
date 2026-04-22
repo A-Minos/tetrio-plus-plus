@@ -42,7 +42,6 @@ function createRewriteFilter(name, url, options) {
 
             if (options.onStart || options.onStop) {
                 let filter = browser.webRequest.filterResponseData(request.requestId);
-                let decoder = new TextDecoder("utf-8");
 
                 function callback({type, data, encoding}) {
                     switch (encoding || 'text') {
@@ -69,16 +68,16 @@ function createRewriteFilter(name, url, options) {
                     }
                 }
 
-                // Potential future BUG: We're assuming onStop will only be called
-                // with textual data, but in the future we might want to process binary
-                // data in transit.
-                let originalData = [];
-                filter.ondata = event => {
-                    let str = decoder.decode(event.data, {stream: true});
-                    originalData.push(str);
-                }
-
                 if (options.onStop) {
+                    // Potential future BUG: We're assuming onStop will only be called
+                    // with textual data, but in the future we might want to process binary
+                    // data in transit.
+                    let originalData = [];
+                    let decoder = new TextDecoder("utf-8");
+                    filter.ondata = event => {
+                        let str = decoder.decode(event.data, {stream: true});
+                        originalData.push(str);
+                    }
                     filter.onstop = async evt => {
                         await options.onStop(dataSource, request.url, originalData.join(''), callback);
                         filter.close();
@@ -97,12 +96,5 @@ var BASE64_MARKER = ';base64,';
 function convertDataURIToBinary(dataURI) {
     var base64Index = dataURI.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
     var base64 = dataURI.substring(base64Index);
-    var raw = atob(base64);
-    var rawLength = raw.length;
-    var array = new Uint8Array(new ArrayBuffer(rawLength));
-
-    for (i = 0; i < rawLength; i++) {
-        array[i] = raw.charCodeAt(i);
-    }
-    return array;
+    return Uint8Array.fromBase64(base64);
 }

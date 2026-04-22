@@ -6,5 +6,7 @@ export default async () => {
     const raw = await response.text();
 
     // oxlint-disable-next-line no-eval
-    await eval(`(async () => { ${raw} })();`);
+    await eval(`(async () => {
+        ${raw}
+    })();`);
 };

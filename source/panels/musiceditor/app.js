@@ -4,30 +4,30 @@ import ListView from './components/ListView.js';
 
 const app = new Vue({
     template: html`
-        <div>
-            <header>
-                <button class="tab" v-for="itab of tabs" @click="tab = itab">
-                    {{ itab.name }}
-                </button>
-                <button @click="save">
-                    Save changes
-                </button>
-                <span style="color: red" v-if="builtinError">Failed to fetch override targets: {{builtinError}}</span>
-                <span :style="{ opacity: saveOpacity }">
+    <div>
+      <header>
+        <button class="tab" v-for="itab of tabs" @click="tab = itab">
+          {{ itab.name }}
+        </button>
+        <button @click="save">
+          Save changes
+        </button>
+        <span style="color: red" v-if="builtinError">Failed to fetch override targets: {{builtinError}}</span>
+        <span :style="{ opacity: saveOpacity }">
           Saved!
         </span>
-            </header>
-            <keep-alive>
-                <component
-                        :is="tab.component"
-                        :music="music"
-                        :builtin="builtin"
-                        @save="save"
-                        @deleteSong="deleteSong"
-                />
-            </keep-alive>
-        </div>
-    `,
+      </header>
+      <keep-alive>
+        <component
+          :is="tab.component"
+          :music="music"
+          :builtin="builtin"
+          @save="save"
+          @deleteSong="deleteSong"
+        />
+      </keep-alive>
+    </div>
+  `,
     data: {
         tabs: [
             {name: 'List View', component: ListView},
@@ -49,7 +49,6 @@ const app = new Vue({
         this.music = cfg.music || [];
 
         try {
-
             const rootUrl = browser.electron ? 'tetrio-plus://tetrio-plus/' : 'https://tetr.io/';
             let url = rootUrl + 'js/tetrio.js?tetrio-plus-bypass=true';
             let tetriojs = await (await fetch(url)).text();
@@ -77,12 +76,12 @@ const app = new Vue({
         }
     },
     methods: {
-        save() {
-            return browser.storage.local.set({
-                music: JSON.parse(JSON.stringify(this.music)) // de-Vue the object
-            }).then(() => {
-                return browser.storage.local.remove(this.deleteOnSave);
-            }).then(() => {
+        async save() {
+            try {
+                await browser.storage.local.set({
+                    music: JSON.parse(JSON.stringify(this.music)) // de-Vue the object
+                });
+                await browser.storage.local.remove(this.deleteOnSave);
                 this.deleteOnSave.length = 0;
 
                 this.saveOpacity = 1.25;
@@ -91,13 +90,13 @@ const app = new Vue({
                     if (this.saveOpacity <= 0)
                         clearTimeout(timeout);
                 }, 50);
-            }).catch(ex => {
+            } catch (ex) {
+                console.error(ex);
                 alert('Failed to save changes: ' + ex);
-            });
+            }
         },
         deleteSong(song) {
             this.$emit('delete', song);
-            let index = this.music.indexOf(song);
             this.music.splice(this.music.indexOf(song), 1);
             this.deleteOnSave.push('song-' + song.id);
         }
