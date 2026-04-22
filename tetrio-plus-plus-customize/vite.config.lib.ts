@@ -15,7 +15,7 @@ export default defineConfig((env) => {
                 ),
                 output: [
                     {
-                        format: "iife",
+                        format: "module",
                         entryFileNames: "loaders/[name].js",
                         codeSplitting: false,
                     },

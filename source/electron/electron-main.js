@@ -12,7 +12,9 @@ const fs = require('fs');
 
 const manifest = require('../../desktop-manifest.js');
 
-let getDataSourceForDomain; // loaded from sandbox below
+let getDataSourceForDomain = require(
+    '../bootstrap/domain-specific-storage-fetcher'
+); // loaded from sandbox below
 
 let markTetrioPlusReady = null;
 const tetrioPlusReady = new Promise(res => markTetrioPlusReady = res);
